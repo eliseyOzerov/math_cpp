@@ -18,7 +18,9 @@ let package = Package(
       path: ".",
       exclude: ["tests", "swift", "build", "README.md", "CMakeLists.txt", "LICENSE", "THIRD_PARTY_NOTICES.md"],
       sources: ["src"],
-      publicHeadersPath: "include"
+      publicHeadersPath: "include",
+      // Optimized in debug builds too: callers' hot loops (a font's ink) run ~10× slower at -O0.
+      cxxSettings: [.unsafeFlags(["-O3"], .when(configuration: .debug))]
     ),
     .target(name: "CurvesCxx", dependencies: ["CCurves"], path: "swift/CurvesCxx"),
     .target(
