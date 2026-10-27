@@ -177,4 +177,23 @@ std::optional<Keys<double>> weightCurve(const std::vector<Cubic>& segs, bool clo
   return out;
 }
 
+std::optional<Keys<double>> transitionKeys(const NibInput& nib, double transition, const std::function<double(double)>& angleAt,
+                                           int samples) {
+  if (!transition) return std::nullopt;
+  double lo = INFINITY, hi = -INFINITY;
+  for (int i = 0; i < 180; i++) {
+    double w = nibWidth(nib, rad(i));
+    lo = std::min(lo, w), hi = std::max(hi, w);
+  }
+  if (hi - lo < 1e-9) return std::nullopt;
+  double g = std::pow(4, clamp(transition, -1, 1));
+  Keys<double> ks;
+  for (int i = 0; i < samples; i++) {
+    double u = double(i) / (samples - 1), w = nibWidth(nib, angleAt(u)), x = clamp((w - lo) / (hi - lo), 0, 1);
+    double y = x < 0.5 ? 0.5 * std::pow(2 * x, g) : 1 - 0.5 * std::pow(2 - 2 * x, g);
+    ks.push_back({u, (lo + (hi - lo) * y) / w});
+  }
+  return ks;
+}
+
 }  // namespace curves

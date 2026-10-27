@@ -40,6 +40,10 @@ golden::Register reg("nib.json", {
      return out(stampPolygon(shapeIn(a[0]), opt(a, 1).value_or(0), opt(a, 2).value_or(5)));
    }},
   {"nibWidth", [](auto& a) { return out(nibWidth(nibArg(a, 0), num(a[1]), opt(a, 2).value_or(1))); }},
+  {"transitionKeysAt", [](auto& a) {
+     double x = num(a[2][0]), y = num(a[2][1]);
+     return outOptKeysD(transitionKeys(nibArg(a, 0), num(a[1]), [=](double u) { return x + y * u; }, a.size() > 3 && !a[3].isNull() ? int(num(a[3])) : 129));
+   }},
   {"stemWidth", [](auto& a) { return out(stemWidth(nibArg(a, 0), opt(a, 1).value_or(1))); }},
   {"shapesOf", [](auto& a) {
      auto k = shapesOf(shapesIn(a[0]), std::get<Nib>(nibIn(a[1])));

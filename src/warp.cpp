@@ -182,4 +182,17 @@ std::function<double(double, double)> noise2(double seed) {
   };
 }
 
+double scatter(double seed, double key) {
+  // JS's ToInt32, then mulberry32's steps as uint32 arithmetic, which is what Math.imul and >>> 0 wrap to.
+  auto int32 = [](double v) -> uint32_t {
+    if (!std::isfinite(v)) return 0;
+    double m = std::fmod(std::trunc(v), 4294967296.0);
+    return uint32_t(int64_t(m < 0 ? m + 4294967296.0 : m));
+  };
+  uint32_t t = (int32(seed) * 0x9e3779b1u ^ int32(key) * 0x85ebca6bu) + 0x6d2b79f5u;
+  t = (t ^ (t >> 15)) * (t | 1);
+  t ^= t + (t ^ (t >> 7)) * (t | 61);
+  return double(t ^ (t >> 14)) / 4294967296.0 * 2 - 1;
+}
+
 }  // namespace curves

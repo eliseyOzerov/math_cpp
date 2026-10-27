@@ -30,6 +30,7 @@ const mod = {
   warpCubicsAt: (c: Cubic[], s: Spec, o?: m.WarpOptions) => m.warpCubics(c, warp(s), o),
   warpContoursAt: (c: Contour[], s: Spec, o?: m.WarpOptions) => m.warpContours(c, warp(s), o),
   warpAt: at,
+  scatterAt: (seed: number, keys: number[]) => keys.map(k => m.scatter(seed, k)),
   noise2At: (seed: number, ps: Pt[]) => ps.map(([x, y]) => m.noise2(seed)(x, y)),
   wobbleWaveAt: (w: m.Wobble, length: number, closed: boolean | undefined, xs: number[]) => xs.map(m.wobbleWave(w, length, closed)),
 }
@@ -102,4 +103,5 @@ export default record(mod, F => {
   const grid1: Pt[] = []
   for (let i = -20; i < 20; i++) grid1.push([i * 0.37 + 0.11, i * -0.53 + 3.3])
   for (const seed of [0, 1, 2, 3, 12345, -1, 0.5, 1e6, 7.9]) { F('noise2At', seed, grid1); F('noise2At', seed, [[-300.7, 300.2], [255.5, 256.5], [511.2, 1.5], [1e3, -1e3], [0, 0], [1, 1]]) }
+  for (const seed of [0, 1, 3, 7, -1, 12345, 0.5, 2 ** 31, -(2 ** 33) + 5, 1e12]) F('scatterAt', seed, [0, 1, 2, 65, 97, 120, 0x1f600, -4, 2 ** 32 + 9])
 })

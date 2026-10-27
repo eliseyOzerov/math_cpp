@@ -27,6 +27,17 @@ Side side(const std::string& s) {
 }
 
 static Register reg("shape.json", {
+  {"bend", [](const Value& a) { return ser(bend(P(a[0]), num(a[1]), pt(a[2]))); }},
+  {"knob", [](const Value& a) {
+     KnobShape k;
+     if (a.size() > 3 && !a[3].isNull()) {
+       if (a[3].has("size")) k.size = a[3]["size"].num();
+       if (a[3].has("length")) k.length = a[3]["length"].num();
+       if (a[3].has("side")) k.side = a[3]["side"].num();
+     }
+     return out(knob(pt(a[0]), pt(a[1]), num(a[2]), k));
+   }},
+  {"runOn", [](const Value& a) { return out(runOn(pt(a[0]), pt(a[1]), num(a[2]), opt(a, 3).value_or(0))); }},
   {"bowed", [](const Value& a) { return out(bowed(pt(a[0]), pt(a[1]), opt(a, 2).value_or(0))); }},
   {"fitBulges", [](const Value& a) { return out(fitBulges(list(a[0], pt), list(a[1], num))); }},
   {"softPolyline", [](const Value& a) { return out(softPolyline(list(a[0], pt), softness(a, 1))); }},

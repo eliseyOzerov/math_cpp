@@ -153,4 +153,38 @@ Path lobe(Pt a, Pt b, const LobeOptions& o, Pt metric) {
   return Path::of(segs, false, metric);
 }
 
+Path bend(const Path& path, double amount, Pt from) {
+  if (!amount) return path;
+  std::vector<Cubic> segs;
+  for (const Cubic& c : path.segs()) {
+    Pt d = c[3] - c[0], n{-d[1], d[0]}, m = lerp(c[0], c[3], 0.5);
+    if (std::hypot(d[0], d[1]) < 1e-9) {
+      segs.push_back(c);
+      continue;
+    }
+    double h = (n[0] * (m[0] - from[0]) + n[1] * (m[1] - from[1]) < 0 ? -amount : amount) / 0.75;
+    segs.push_back({c[0], Pt{c[1][0] + h * n[0], c[1][1] + h * n[1]}, Pt{c[2][0] + h * n[0], c[2][1] + h * n[1]}, c[3]});
+  }
+  return path.reshaped(std::move(segs));
+}
+
+std::vector<Cubic> knob(Pt p, Pt t, double half, const KnobShape& o) {
+  double r = o.size * half, ra = o.length * r, sign = o.side > 0 ? 1 : o.side < 0 ? -1 : 0, k = sign * (r - half);
+  Pt n{-t[1], t[0]}, c{p[0] + n[0] * k, p[1] + n[1] * k};
+  auto at = [&](Pt q) { return Pt{c[0] + t[0] * q[0] + n[0] * q[1], c[1] + t[1] * q[0] + n[1] * q[1]}; };
+  Path ring = oval(-ra, -r, ra, r);
+  std::vector<Cubic> cs;
+  for (const Cubic& q : ring.segs()) cs.push_back({at(q[0]), at(q[1]), at(q[2]), at(q[3])});
+  return cs;
+}
+
+Cubic runOn(Pt p, Pt t, double length, double turn) {
+  double th = rad(turn);
+  Pt n{-t[1], t[0]};
+  auto at = [&](double x, double y) { return Pt{p[0] + t[0] * x + n[0] * y, p[1] + t[1] * x + n[1] * y}; };
+  if (std::abs(th) < 1e-6) return {p, at(length / 3, 0), at(2 * length / 3, 0), at(length, 0)};
+  double R = length / th, k = (4.0 / 3) * std::tan(th / 4) * R, ex = R * std::sin(th), ey = R * (1 - std::cos(th));
+  return {p, at(k, 0), at(ex - k * std::cos(th), ey - k * std::sin(th)), at(ex, ey)};
+}
+
 }  // namespace curves

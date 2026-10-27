@@ -45,6 +45,26 @@ Cubic bowed(Pt a, Pt b, double bulge = 0);
  *  round the tip. */
 std::vector<double> fitBulges(const std::vector<Pt>& pts, const std::vector<double>& bulges);
 
+/** `path` with every segment bowed `amount` of its chord away from `from` (below 0 towards it): both handles pushed
+ *  along the chord's normal, as `bowed`, so the nodes and the turns at them hold while the runs between swell. A
+ *  segment that comes back to its start (no chord) is kept. */
+Path bend(const Path& path, double amount, Pt from);
+
+/** A knob's shape: `size` halves across, `length` times that along, set `side` of the curve. */
+struct KnobShape {
+  double size = 1.6, length = 1, side = 0;
+};
+
+/** A closed knob on the end at `p` that leaves along `t` (outward), the curve `half` wide there: an ellipse `size`
+ *  halves across and `length` times that along `t`, its centre set `side` of the curve (+1 its left, −1 its right, 0
+ *  on it) by its radius less `half`, so one edge runs on from the curve's edge on the other side and it swells
+ *  towards `side`, as a c's ball hangs into its counter. The curve's end, rounded, lies inside it for `size` ≥ 1. */
+std::vector<Cubic> knob(Pt p, Pt t, double half, const KnobShape& k = {});
+
+/** A curve run on from `p` along `t` for `length`: a circular arc turning `turn` degrees on the way (positive to
+ *  the left of `t`), straight for 0. One cubic, so keep `turn` within about 120°. */
+Cubic runOn(Pt p, Pt t, double length, double turn = 0);
+
 /** The polyline through `pts` (open, its ends kept sharp) as cubics, its sides bowed (as far as its corners allow,
  *  see fitBulges) and inner corners rounded. */
 std::vector<Cubic> softPolyline(const std::vector<Pt>& pts, const Softness& softness = {});

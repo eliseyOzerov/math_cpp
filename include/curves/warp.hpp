@@ -109,6 +109,10 @@ double wobbleStep(const Wobble& w);
  *  run of the field, or round a circle as long as the line when it is `closed`, so a ring's ends meet. */
 Wave wobbleWave(const Wobble& w, double length, bool closed = false);
 
+/** A seeded value for `key`, −1…1, the same for the same seed and key on every machine and unrelated between keys
+ *  (mulberry32 on the two mixed): for a jitter per item, as a glyph's bounce by its code point. */
+double scatter(double seed, double key);
+
 /** Seeded 2D gradient noise (Perlin's), about −1…1, smooth, the same for the same seed on every machine. */
 std::function<double(double, double)> noise2(double seed);
 

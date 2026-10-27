@@ -29,7 +29,10 @@ const curves: Cubic[] = [
 const segs = (...c: Cubic[]) => c
 const comps: m.Compensation[] = [{}, { round: 1.1 }, { diagonal: 0.9 }, { round: 1.06, diagonal: 0.92 }, { round: 1, diagonal: 1 }]
 
-export default record({ ...m }, F => {
+// transitionKeys' angle along the stroke as a line a + b·u.
+const tk = { transitionKeysAt: (n: m.NibInput, tr: number, [a, b]: [number, number], samples?: number) => m.transitionKeys(n, tr, u => a + b * u, samples) }
+
+export default record({ ...m, ...tk }, F => {
   // nibOf, stemNib, stemPenOf
   for (const n of nibs) F('nibOf', n)
   F('nibOf')
@@ -75,4 +78,7 @@ export default record({ ...m }, F => {
   for (const s of sets) for (const c of comps) for (const closed of [false, true]) F('weightCurve', s, closed, c, 40)
   F('weightCurve', mixed, false, comps[3], 0); F('weightCurve', mixed, false, comps[3], 1000); F('weightCurve', square, true, comps[3], 150)
   F('weightCurve', ring, true, { round: 1.1, diagonal: 1 }, 60); F('weightCurve', diamond, true, { round: 1, diagonal: 0.8 }, 60)
+  for (const n of [40, { w: 60, h: 30, angle: 30 }, { weight: 80, contrast: 0.4, stress: 20 }, { weight: 60, contrast: 0.5 }])
+    for (const tr of [0, 0.6, -0.5, 2, -3]) F('transitionKeysAt', n, tr, [0, Math.PI], 17)
+  F('transitionKeysAt', { weight: 90, contrast: 0.6, stress: 20 }, 0.6, [0.3, 2])
 })

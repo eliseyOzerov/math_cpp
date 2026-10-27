@@ -106,6 +106,11 @@ golden::Register reg("warp.json", {
      for (auto& x : a[3].arr()) r.push_back(w(x.num()));
      return out(r);
    }},
+  {"scatterAt", [](auto& a) {
+     std::vector<double> r;
+     for (auto& k : a[1].arr()) r.push_back(scatter(a[0].num(), k.num()));
+     return out(r);
+   }},
   {"noise2At", [](auto& a) {
      auto f = noise2(a[0].num());
      std::vector<double> r;

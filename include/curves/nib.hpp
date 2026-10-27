@@ -90,6 +90,15 @@ double nibWidth(const NibInput& nib, double angle, double scale = 1);
 /** The stem: the ink's width on an upright stroke. */
 double stemWidth(const NibInput& nib, double scale = 1);
 
+/** A size curve over a stroke that makes a broad nib's turn from thick to thin more abrupt (`transition` > 0, a
+ *  Didone's hairline reached in a short run) or more gradual (< 0, old style), from −1 to 1; 0 leaves the nib's own.
+ *  The ink's width at each share `u` (the nib across `angleAt(u)`, the stroke's direction) is placed between the
+ *  nib's thinnest and thickest, that share pushed towards the nearer extreme by a power of 4^transition (towards
+ *  the middle for a negative one), and the factor taking the width there returned. Thick and thin stay as they are;
+ *  only the run between them changes. nullopt for no transition or a nib as wide every way. */
+std::optional<Keys<double>> transitionKeys(const NibInput& nib, double transition, const std::function<double(double)>& angleAt,
+                                           int samples = 129);
+
 /** A shape given in part: fields left out are 1 (w, h) or the nib's own (rx, ry). */
 struct PartialShape {
   std::optional<double> w, h;
