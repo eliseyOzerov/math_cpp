@@ -71,6 +71,10 @@ attach.cpp).
 Name `curves::apply` in full when calling it: argument-dependent lookup on the `std::array` arguments would otherwise
 find `std::apply`.
 
+## Data
+
+How the library's values are saved as JSON (drawings, nibs, keys, cuts) is in [DATA.md](DATA.md).
+
 ## C API (`curves.h`)
 
 The C API is the same functions, renamed in snake case with the `cv_` prefix, over plain structs whose layout matches
