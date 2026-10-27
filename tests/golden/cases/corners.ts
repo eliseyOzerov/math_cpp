@@ -28,6 +28,11 @@ const shapes: Record<string, (k: m.Corner) => number | m.CornerShape> = {
   emptyProfile: () => ({ angle: 0.5, profile: [] }),
   profileOnly: () => ({ angle: 0, profile: m.caps.rect(0.5) }),
   objectNoProfile: () => ({ angle: 0.5 }),
+  curveNotch: () => ({ angle: 0, curve: [[[-1, 0], [0, 1.5]], [[0, 1.5], [1, 0]]] }),
+  curveRound: () => ({ angle: 0, curve: [[[-1, 0], [-1, 0.9], [-0.55, 1.6], [0, 1.6]], [[0, 1.6], [0.55, 1.6], [1, 0.9], [1, 0]]] }),
+  curveLoose: () => ({ angle: 0, curve: [[[-0.8, 0.1], [0, 2]], [[0, 2], [0.9, 0.2], [0.7, -0.3], [1.1, 0.3]]] }),
+  curveWell: k => ({ angle: 0, curve: k.turn > 0 ? [[[-1, 0], [-0.7, 0.2], [-0.45, 0.35], [0, 0.35]], [[0, 0.35], [0.45, 0.35], [0.7, 0.2], [1, 0]]] : undefined }),
+  curveEmpty: () => ({ angle: 0.5, curve: [] }),
 }
 
 const rect = (x: number, y: number, w: number, h: number): Contour => {
@@ -75,6 +80,12 @@ export default record({
   replaceCornersBy: (cs: Contour[], reach: string, make: string, opts?: object) => m.replaceCorners(cs, reaches[reach]!, makes[make]!, opts),
   shapeCornersBy: (cs: Contour[], size: string, shape: string) => m.shapeCorners(cs, sizes[size]!, shapes[shape]!),
   capShape: (name: 'triangle' | 'rect' | 'arc', h?: number) => m.caps[name](h),
+  shapeCornersSeen: (cs: Contour[], size: string, shape: string) => {
+    const seen: unknown[] = []
+    const contours = m.shapeCorners(cs, sizes[size]!, shapes[shape]!, (k, a, b) => seen.push({ contour: k.contour, at: k.at, a, b }))
+    return { contours, seen }
+  },
+  cornerFrameAt: (a: Pt, b: Pt, p: Pt, q: Pt) => { const f = m.cornerFrame(a, b, p); return { to: f.to(q), from: f.from(q) } },
 }, F => {
   for (const cs of all) { F('corners', cs); F('pits', cs); F('peaks', cs) }
   F('corners', []); F('corners', square, 100); F('corners', cross, 0); F('corners', blob, 30); F('corners', disc, 0.001)
@@ -94,6 +105,12 @@ export default record({
   for (const shape of Object.keys(shapes)) for (const cs of [cross, tee, square, tri]) F('shapeCornersBy', cs, 'ten', shape)
   for (const size of Object.keys(sizes)) for (const shape of ['zero', 'mixed', 'rect', 'triangle', 'arc', 'inFull', 'over'])
     for (const cs of [blob, ring, ell, slant]) F('shapeCornersBy', cs, size, shape)
+
+  for (const shape of ['curveNotch', 'curveRound', 'curveLoose', 'curveWell', 'curveEmpty'])
+    for (const cs of [cross, tee, blob, ell, slant]) { F('shapeCornersBy', cs, 'byTurn', shape); F('shapeCornersSeen', cs, 'ten', shape) }
+  F('cornerFrameAt', [0, 0], [10, 0], [5, 4], [0.5, 1.5]); F('cornerFrameAt', [0, 0], [10, 0], [5, 4], [33, -7])
+  F('cornerFrameAt', [3, 1], [-4, 9], [8, 12], [-1, 0.2]); F('cornerFrameAt', [0, 0], [10, 0], [5, 0], [0.3, 0.7])
+  F('cornerFrameAt', [2, 2], [8, 8], [5, 5], [-0.4, 2])
 
   F('capShape', 'triangle'); F('capShape', 'triangle', 0.5); F('capShape', 'rect'); F('capShape', 'rect', 1)
   F('capShape', 'arc'); F('capShape', 'arc', 0.3)

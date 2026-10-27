@@ -50,6 +50,26 @@ const std::map<std::string, Shp> shapes{
   {"emptyProfile", [](auto&) { return CornerShape(0.5, {}); }},
   {"profileOnly", [](auto&) { return CornerShape(0, caps::rect(0.5)); }},
   {"objectNoProfile", [](auto&) { return CornerShape(0.5); }},
+  {"curveNotch", [](auto&) { CornerShape s(0); s.curve = std::vector<Piece>{Piece::of({-1, 0}, {0, 1.5}), Piece::of({0, 1.5}, {1, 0})}; return s; }},
+  {"curveRound", [](auto&) {
+     CornerShape s(0);
+     s.curve = std::vector<Piece>{Piece::of(Cubic{Pt{-1, 0}, Pt{-1, 0.9}, Pt{-0.55, 1.6}, Pt{0, 1.6}}),
+                                  Piece::of(Cubic{Pt{0, 1.6}, Pt{0.55, 1.6}, Pt{1, 0.9}, Pt{1, 0}})};
+     return s;
+   }},
+  {"curveLoose", [](auto&) {
+     CornerShape s(0);
+     s.curve = std::vector<Piece>{Piece::of({-0.8, 0.1}, {0, 2}), Piece::of(Cubic{Pt{0, 2}, Pt{0.9, 0.2}, Pt{0.7, -0.3}, Pt{1.1, 0.3}})};
+     return s;
+   }},
+  {"curveWell", [](auto& k) {
+     CornerShape s(0);
+     if (k.turn > 0)
+       s.curve = std::vector<Piece>{Piece::of(Cubic{Pt{-1, 0}, Pt{-0.7, 0.2}, Pt{-0.45, 0.35}, Pt{0, 0.35}}),
+                                    Piece::of(Cubic{Pt{0, 0.35}, Pt{0.45, 0.35}, Pt{0.7, 0.2}, Pt{1, 0}})};
+     return s;
+   }},
+  {"curveEmpty", [](auto&) { CornerShape s(0.5); s.curve = std::vector<Piece>{}; return s; }},
 };
 
 CornerOpts opts(const Value& a, size_t i) {
@@ -76,6 +96,18 @@ golden::Register reg("corners.json", {
    }},
   {"shapeCornersBy", [](auto& a) {
      return golden::out(shapeCorners(contours(a[0]), sizes.at(a[1].str()), shapes.at(a[2].str())));
+   }},
+  {"shapeCornersSeen", [](auto& a) {
+     json::Array seen;
+     auto cs = shapeCorners(contours(a[0]), sizes.at(a[1].str()), shapes.at(a[2].str()), [&](const Corner& k, Pt p, Pt q) {
+       seen.push_back(json::Object{{"contour", golden::out(k.contour)}, {"at", golden::out(k.at)}, {"a", golden::out(p)}, {"b", golden::out(q)}});
+     });
+     return Value(json::Object{{"contours", golden::out(cs)}, {"seen", seen}});
+   }},
+  {"cornerFrameAt", [](auto& a) {
+     CornerFrame f = cornerFrame(pt(a[0]), pt(a[1]), pt(a[2]));
+     Pt q = pt(a[3]);
+     return Value(json::Object{{"to", golden::out(f.to(q))}, {"from", golden::out(f.from(q))}});
    }},
   {"capShape", [](auto& a) {
      auto h = opt(a, 1);

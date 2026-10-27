@@ -71,14 +71,27 @@ std::vector<Contour> roundCorners(std::span<const Contour> cs, double radius, Co
 std::vector<Contour> roundCorners(std::span<const Contour> cs, const std::function<double(const Corner&)>& radius,
                                   CornerOpts opts = {});
 
-/** How a corner is shaped (see `shapeCorners`): the angle, −1…1, and optionally a profile drawn in its place. */
+/** How a corner is shaped (see `shapeCorners`): the angle, −1…1, and optionally a profile drawn in its place, or a
+ *  curve drawn in the corner's own frame (see `cornerFrame`). */
 struct CornerShape {
   double angle = 0;
-  std::optional<std::vector<Piece>> profile;
+  std::optional<std::vector<Piece>> profile, curve;
   CornerShape() = default;
   CornerShape(double angle) : angle(angle) {}
   CornerShape(double angle, std::vector<Piece> profile) : angle(angle), profile(std::move(profile)) {}
 };
+
+/** The frame a corner's replacement is drawn in: x from −1 at the first cut `a` to 1 at the second `b`, and y from 0
+ *  on the chord between them to 1 at the corner `p` itself, an affine map either way (`to` into the plane, `from`
+ *  back). Past 1 is beyond the corner: into the ink at a pit (a trap), out of it at a peak; below 1 is the other way
+ *  (a well, a cove). A corner on its chord has no height: a unit square to the chord stands in. */
+struct CornerFrame {
+  Pt m, ex, ey;
+  double det = 0;
+  Pt to(Pt q) const;
+  Pt from(Pt w) const;
+};
+CornerFrame cornerFrame(Pt a, Pt b, Pt p);
 
 /** The contours with their corners shaped: each corner `size` gives a radius (0 or less leaves it) is replaced by a
  *  circular arc from where a fillet of that radius would start to where it would end, and the shape's `angle` sets
@@ -86,9 +99,11 @@ struct CornerShape {
  *  tilts it out of the ink, adding ink; inset, towards −1, tilts it into the ink, taking ink away. At ±1 the arc
  *  leaves the sides square, at 90°; beyond, up to the arc closing on itself. A `profile` draws any open curve in the
  *  arc's place, across a box from x −1 at the corner's first cut to 1 at its second, and up, its bounding box's top
- *  as far off the chord as the arc for that angle bulges. */
+ *  as far off the chord as the arc for that angle bulges. A `curve` is drawn in the corner's frame instead
+ *  (cornerFrame), its ends pinned to the cuts. `seen` hears each corner's cuts as they are made. */
 std::vector<Contour> shapeCorners(std::span<const Contour> cs, const std::function<double(const Corner&)>& size,
-                                  const std::function<CornerShape(const Corner&)>& shape);
+                                  const std::function<CornerShape(const Corner&)>& shape,
+                                  const std::function<void(const Corner&, Pt, Pt)>& seen = {});
 
 /** A cap: its curve, open, across the stroke, and where the stroke's end sits in its box (1 bottom … −1 top). */
 struct Cap {

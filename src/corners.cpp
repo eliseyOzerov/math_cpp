@@ -158,14 +158,42 @@ std::vector<Contour> roundCorners(std::span<const Contour> cs, double radius, Co
   return roundCorners(cs, [radius](const Corner&) { return radius; }, opts);
 }
 
+CornerFrame cornerFrame(Pt a, Pt b, Pt p) {
+  Pt m = lerp(a, b, 0.5), ex = (b - a) * 0.5;
+  // A corner on its chord (no turn) has no height: a unit square to the chord stands in.
+  Pt ey = p - m;
+  if (std::abs(ex[0] * ey[1] - ex[1] * ey[0]) < 1e-9) ey = {-ex[1], ex[0]};
+  return {m, ex, ey, ex[0] * ey[1] - ex[1] * ey[0]};
+}
+Pt CornerFrame::to(Pt q) const { return {m[0] + ex[0] * q[0] + ey[0] * q[1], m[1] + ex[1] * q[0] + ey[1] * q[1]}; }
+Pt CornerFrame::from(Pt w) const {
+  Pt d = w - m;
+  return {(d[0] * ey[1] - d[1] * ey[0]) / det, (ex[0] * d[1] - ex[1] * d[0]) / det};
+}
+
 std::vector<Contour> shapeCorners(std::span<const Contour> cs, const std::function<double(const Corner&)>& size,
-                                  const std::function<CornerShape(const Corner&)>& shape) {
+                                  const std::function<CornerShape(const Corner&)>& shape,
+                                  const std::function<void(const Corner&, Pt, Pt)>& seen) {
   return replaceCorners(
     cs, [&](const Corner& k) { return filletReach(size(k), k.turn); },
     [&](Pt a, Pt ta, Pt b, Pt tb, const Corner& k) -> std::vector<Piece> {
       CornerShape sh = shape(k);
       double s = sh.angle;
       const auto& profile = sh.profile;
+      if (seen) seen(k, a, b);
+      if (sh.curve && !sh.curve->empty()) {
+        CornerFrame fr = cornerFrame(a, b, k.p);
+        std::vector<Piece> out;
+        for (auto& q : *sh.curve) {
+          Piece m = q;
+          for (int j = 0; j < npts(q); j++) m.p[j] = fr.to(q.p[j]);
+          out.push_back(m);
+        }
+        out[0].p[0] = a;
+        Piece& last = out.back();
+        last.p[last.line ? 1 : 3] = b;
+        return out;
+      }
       if (!js::truthy(s) && !profile) return {Piece::of(arcCubic(a, ta, b, tb))};
       Pt u = norm(b - a);
       double chord = dist(a, b);
