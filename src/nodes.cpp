@@ -3,6 +3,7 @@
 #include "curves/bezier.hpp"
 #include "curves/fit.hpp"
 #include "js.hpp"
+#include "jsmath.hpp"
 
 #include <cmath>
 #include <stdexcept>
@@ -272,11 +273,12 @@ std::vector<std::vector<Node>> withLockedHandle(const std::vector<std::vector<No
       me = &h;
       break;
     }
-  double by = lock->angle ? turn(*from, to) : 0;
+  // Math.atan2, sin and cos as V8 has them (jsmath.hpp), so the turned handles agree with the TS to the bit.
+  double by = lock->angle ? js::atan2(cross(*from, to), dot(*from, to)) : 0;
   double k = lock->length && !zero(to) ? len(to) / len(*from) : 1;
   for (auto& h : lock->handles) {
     std::optional<Pt> v = handleAt(lists, h);
-    if (!same(h, ref) && !zero(v)) set(h, rotate(*v, !h.flip == !me->flip ? by : -by) * k);
+    if (!same(h, ref) && !zero(v)) set(h, js::rotate(*v, !h.flip == !me->flip ? by : -by) * k);
   }
   return out;
 }
