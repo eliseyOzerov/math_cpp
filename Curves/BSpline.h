@@ -119,6 +119,11 @@ public:
 
     static std::optional<std::vector<float>> clampedUniformKnots(int degree, int controlPointCount);
 
+    // MARK: Periodic (closed) splines
+
+    static std::optional<BSpline> periodic(
+        int degree, const std::vector<Point>& controlPoints, const std::optional<std::vector<float>>& weights = std::nullopt);
+
     ParameterRange parameterRange() const;
     bool isClampedAtStart() const;
     bool isClampedAtEnd() const;
@@ -140,12 +145,16 @@ public:
     // MARK: Bézier pieces
 
     std::optional<std::vector<CubicBezier<Point>>> cubicBezierPieces() const;
+    std::optional<std::vector<CubicBezier<Point>>> unclampedCubicBezierPieces() const;
 
     // MARK: 2D conveniences
 
     std::optional<Path2D> path() const requires std::same_as<PointType, Vector2>;
 
     static std::optional<BSpline> circle(Vector2 centre, float radius)
+        requires std::same_as<PointType, Vector2>;
+
+    static std::optional<Path2D> closedPath(const std::vector<Vector2>& controlPoints)
         requires std::same_as<PointType, Vector2>;
 
 private:

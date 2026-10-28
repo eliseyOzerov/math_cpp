@@ -35,6 +35,91 @@ CatmullRomSpline::CatmullRomSpline(const std::vector<Vector3>& points) {
     }
 }
 
+// MARK: - Flat splines
+
+/// Cubics through every point of a flat list in turn: a Catmull–Rom spline of any `alpha`, with a
+/// `tension` and the option to close.
+///
+/// How: consecutive points closer than `Tolerance.geometric` are merged (a closed list that ends
+/// on its first point drops that last one). For each pair `P₁ → P₂` with neighbours `P₀`, `P₃`,
+/// knot gaps are `tᵢ = |Pᵢ − Pᵢ₋₁|^alpha` (at least 1e-9), and Barry and Goldman's end velocities
+/// (see `segment`) give the Bézier handles
+///
+///     startHandle = P₁ + v₁·(t₂−t₁)/3·tension        endHandle = P₂ − v₂·(t₂−t₁)/3·tension
+///
+/// An open spline's missing neighbours are mirrored (`2·end − neighbour`), so it leaves the ends
+/// straight on; a closed one wraps round, one more cubic joining the last point to the first.
+///
+/// Conventions: y-up plane; alpha 0 gives the uniform spline, 0.5 the centripetal (no loops), 1 the
+/// chordal; tension 1 is the spline itself and 0 the polyline. Empty for fewer than two distinct
+/// points.
+///
+/// Source: Barry & Goldman (1988); Yuksel, Schaefer & Keyser (2011); graphics_cpp curves/spline.cpp
+/// `catmullRom`.
+///
+/// Use when: a stroke that must pass through hand-placed points, open or closed; a wobble's keys
+/// Tags: Catmull-Rom, centripetal, chordal, uniform, spline through points, closed spline, tension
+/// Node: planned (splineThrough)
+std::vector<CubicBezier<Vector2>> CatmullRomSpline::cubicsThrough(
+    const std::vector<Vector2>& points, const CatmullRomOptions& options) {
+    std::vector<Vector2> distinct;
+    for (Vector2 point : points) {
+        if (distinct.empty() || point.distance(distinct.back()) > Tolerance::geometric) distinct.push_back(point);
+    }
+    if (options.closed && distinct.size() > 2 && distinct.front().distance(distinct.back()) < Tolerance::geometric) {
+        distinct.pop_back();
+    }
+    int count = static_cast<int>(distinct.size());
+    if (count < 2) return {};
+    auto neighbour = [&](int index) {
+        if (options.closed) return distinct[static_cast<size_t>(((index % count) + count) % count)];
+        if (index < 0) return distinct[0] * 2 - distinct[1];
+        if (index >= count) return distinct[static_cast<size_t>(count - 1)] * 2 - distinct[static_cast<size_t>(count - 2)];
+        return distinct[static_cast<size_t>(index)];
+    };
+    auto knotGap = [&](Vector2 from, Vector2 to) { return largerOf(std::pow(from.distance(to), options.alpha), 1e-9f); };
+    // The Barry–Goldman velocity at the middle point of three, for knots `ta < tb < tc`.
+    auto velocity = [](Vector2 a, Vector2 b, Vector2 c, float ta, float tb, float tc) {
+        return (b - a) / (tb - ta) - (c - a) / (tc - ta) + (c - b) / (tc - tb);
+    };
+    std::vector<CubicBezier<Vector2>> cubics;
+    int pieceCount = options.closed ? count : count - 1;
+    for (int index = 0; index < pieceCount; index += 1) {
+        Vector2 before = neighbour(index - 1);
+        Vector2 current = neighbour(index);
+        Vector2 next = neighbour(index + 1);
+        Vector2 after = neighbour(index + 2);
+        float firstKnot = knotGap(before, current);
+        float secondKnot = firstKnot + knotGap(current, next);
+        float thirdKnot = secondKnot + knotGap(next, after);
+        Vector2 velocityAtCurrent = velocity(before, current, next, 0, firstKnot, secondKnot);
+        Vector2 velocityAtNext = velocity(current, next, after, firstKnot, secondKnot, thirdKnot);
+        float reach = (secondKnot - firstKnot) / 3 * options.tension;
+        cubics.push_back(CubicBezier<Vector2>(current, current + velocityAtCurrent * reach, next - velocityAtNext * reach, next));
+    }
+    return cubics;
+}
+
+/// The Catmull–Rom spline through the points as a path (closed when the options say so), or
+/// nothing for fewer than two distinct points.
+///
+/// How: `cubicsThrough`, one cubic piece per cubic; a closed spline's last cubic ends on the first
+/// point, then `close()`.
+///
+/// Use when: a stroke through points that will be offset, filled or measured as a path
+/// Tags: Catmull-Rom path, spline path, curve through points, smooth outline
+/// Node: planned (splineThrough)
+std::optional<Path2D> CatmullRomSpline::pathThrough(const std::vector<Vector2>& points, const CatmullRomOptions& options) {
+    std::vector<CubicBezier<Vector2>> cubics = cubicsThrough(points, options);
+    if (cubics.empty()) return std::nullopt;
+    Path2D path(cubics.front().start);
+    for (const CubicBezier<Vector2>& cubic : cubics) path.addCubic(cubic.startHandle, cubic.endHandle, cubic.end);
+    if (options.closed) path.close();
+    return path;
+}
+
+// MARK: - Spatial splines
+
 /// The point on the spline at `parameter`, found from the Catmull–Rom piece that
 /// contains it.
 ///

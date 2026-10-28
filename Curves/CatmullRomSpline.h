@@ -3,13 +3,31 @@
 // (Engine/Math/Curves/CatmullRomSpline.swift).
 #pragma once
 
+#include <optional>
 #include <vector>
 
+#include "../Linear/Vector2.h"
 #include "../Linear/Vector3.h"
 #include "CubicBezier.h"
 #include "Curve.h"
+#include "Path2D.h"
 
 namespace editor {
+
+/// How a flat Catmull–Rom spline is drawn through its points.
+///
+/// Use when: choosing between the uniform, centripetal and chordal spline, or a looser or tighter
+///   one, for a stroke through points
+/// Tags: Catmull-Rom options, alpha, tension, closed spline, parameterization
+/// Node: planned (splineThrough)
+struct CatmullRomOptions {
+    /// The knot spacing exponent: 0 uniform, 0.5 centripetal (never loops or cusps), 1 chordal.
+    float alpha = 0.5f;
+    /// How far the handles reach: 1 the spline's own, 0 the polyline through the points.
+    float tension = 1;
+    /// Whether the curve comes back to the first point, smoothly.
+    bool closed = false;
+};
 
 /// A smooth curve through a list of points, using the **centripetal Catmull–Rom**
 /// parameterization (alpha = 0.5).
@@ -77,6 +95,13 @@ public:
 
     Vector3 point(float parameter) const;
     Vector3 firstDerivative(float parameter) const;
+
+    // MARK: Flat splines with alpha, tension and closing (CatmullRomSpline.cpp)
+
+    static std::vector<CubicBezier<Vector2>> cubicsThrough(
+        const std::vector<Vector2>& points, const CatmullRomOptions& options = CatmullRomOptions());
+    static std::optional<Path2D> pathThrough(
+        const std::vector<Vector2>& points, const CatmullRomOptions& options = CatmullRomOptions());
 
 private:
     struct SegmentLocation {

@@ -30,6 +30,47 @@ std::optional<BSpline<PointType>> BSpline<PointType>::make(
     return spline;
 }
 
+/// The **periodic** (closed) spline of a ring of control points: the curve comes round to where it
+/// began, as smooth as the degree allows (continuous up to the derivatives of order `degree − 1`).
+///
+/// How: the polygon is wrapped, the first `degree` points repeated at the end (and their weights),
+/// and the knots are the uniform integers `0, 1, 2 … n + 2·degree`. The curve lives on
+/// `degree … n + degree`, one span per control point, and its end meets its start because the
+/// last `degree + 1` control points are the first `degree + 1` again.
+///
+///     P1 ●────● P2        a ring of four points gives a closed rounded curve inside them;
+///        │    │           no point is touched, each pulls the curve near it
+///     P0 ●────● P3
+///
+/// Conventions: needs more control points than `degree`; empty (Swift's `nil`) otherwise, or where
+/// `problem(...)` objects. The parameter is the knot value, so the curve closes at
+/// `parameterRange().upperBound`.
+///
+/// Source: Piegl & Tiller, *The NURBS Book* (1997), §8.5 (closed curves); graphics_cpp
+/// curves/spline.cpp `setup` (`closed`).
+///
+/// Use when: a smooth closed outline steered by a control polygon; a blob, a leaf, a loop road
+/// Tags: periodic B-spline, closed B-spline, uniform cyclic spline, closed curve
+/// Node: planned (closedSpline)
+template <CurvePoint PointType>
+std::optional<BSpline<PointType>> BSpline<PointType>::periodic(
+    int degree, const std::vector<Point>& controlPoints, const std::optional<std::vector<float>>& weights) {
+    int ringCount = static_cast<int>(controlPoints.size());
+    if (!(degree >= 1 && ringCount > degree)) return std::nullopt;
+    if (weights.has_value() && static_cast<int>(weights->size()) != ringCount) return std::nullopt;
+    std::vector<Point> wrappedPoints = controlPoints;
+    wrappedPoints.insert(wrappedPoints.end(), controlPoints.begin(), controlPoints.begin() + degree);
+    std::optional<std::vector<float>> wrappedWeights;
+    if (weights.has_value()) {
+        std::vector<float> wrapped = *weights;
+        wrapped.insert(wrapped.end(), weights->begin(), weights->begin() + degree);
+        wrappedWeights = wrapped;
+    }
+    std::vector<float> knots;
+    for (int index = 0; index < ringCount + 2 * degree + 1; index += 1) knots.push_back(static_cast<float>(index));
+    return make(degree, wrappedPoints, knots, wrappedWeights);
+}
+
 /// What is wrong with these spline inputs, in a readable sentence, or empty when they are
 /// fine.
 ///
@@ -494,6 +535,33 @@ std::optional<std::vector<CubicBezier<PointType>>> BSpline<PointType>::cubicBezi
 }
 
 /// The last span with a positive length.
+/// The cubic pieces of a non-rational cubic spline with any knots, clamped or not (a periodic one
+/// has none clamped), or empty (Swift's `nil`) for another degree or a rational spline.
+///
+/// How: for each span of positive length with knots `a < b`, the piece's control points are the
+/// blossoms at `(a,a,a)`, `(a,a,b)`, `(a,b,b)` and `(b,b,b)` (the same blossoms `cubicBezierPieces`
+/// uses). A piece starts where the one before ended.
+///
+/// Source: Ramshaw, "Blossoming: a connect-the-dots approach to splines" (1987).
+///
+/// Use when: drawing a periodic cubic spline as a path
+/// Tags: B-spline to Bezier, blossom, unclamped spline, periodic to cubics
+/// Node: inside closedSpline
+template <CurvePoint PointType>
+std::optional<std::vector<CubicBezier<PointType>>> BSpline<PointType>::unclampedCubicBezierPieces() const {
+    if (!(degree == 3 && !weights.has_value())) return std::nullopt;
+    std::vector<CubicBezier<Point>> pieces;
+    for (int containingSpan = degree; containingSpan < static_cast<int>(controlPoints.size()); containingSpan += 1) {
+        if (!(knots[containingSpan] < knots[containingSpan + 1])) continue;
+        float a = knots[containingSpan];
+        float b = knots[containingSpan + 1];
+        Point start = pieces.empty() ? blossom(containingSpan, {a, a, a}) : pieces.back().end;
+        pieces.push_back(CubicBezier<Point>(
+            start, blossom(containingSpan, {a, a, b}), blossom(containingSpan, {a, b, b}), blossom(containingSpan, {b, b, b})));
+    }
+    return pieces;
+}
+
 template <CurvePoint PointType>
 int BSpline<PointType>::lastNonEmptySpan() const {
     return span(parameterRange().upperBound);
@@ -572,6 +640,34 @@ std::optional<BSpline<PointType>> BSpline<PointType>::circle(Vector2 centre, flo
     return make(
         2, circlePoints, {0, 0, 0, 0.25f, 0.25f, 0.5f, 0.5f, 0.75f, 0.75f, 1, 1, 1},
         std::vector<float>{1, cornerWeight, 1, cornerWeight, 1, cornerWeight, 1, cornerWeight, 1});
+}
+
+/// The closed cubic B-spline steered by a ring of control points, as a closed path of cubics.
+///
+/// How: `periodic(3, controlPoints)` then `unclampedCubicBezierPieces`, one cubic per control point;
+/// the last piece is pinned to end exactly on the start so the path closes with no closing line.
+///
+/// Conventions: y-up plane; empty (Swift's `nil`) for fewer than four control points or where the
+/// spline cannot be built.
+///
+/// Use when: a smooth closed outline steered by a control polygon
+/// Tags: closed B-spline path, periodic spline path, blob outline, smooth closed curve
+/// Node: planned (closedSpline)
+template <CurvePoint PointType>
+std::optional<Path2D> BSpline<PointType>::closedPath(const std::vector<Vector2>& controlPoints)
+    requires std::same_as<PointType, Vector2>
+{
+    std::optional<BSpline> ring = periodic(3, controlPoints);
+    if (!ring) return std::nullopt;
+    std::optional<std::vector<CubicBezier<Vector2>>> pieces = ring->unclampedCubicBezierPieces();
+    if (!pieces || pieces->empty()) return std::nullopt;
+    Path2D result(pieces->front().start);
+    for (size_t index = 0; index < pieces->size(); index += 1) {
+        const CubicBezier<Vector2>& piece = (*pieces)[index];
+        result.addCubic(piece.startHandle, piece.endHandle, index + 1 == pieces->size() ? pieces->front().start : piece.end);
+    }
+    result.close();
+    return result;
 }
 
 template class BSpline<Vector2>;

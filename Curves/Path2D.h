@@ -19,12 +19,74 @@
 
 #include "../Linear/Angle.h"
 #include "CubicBezier.h"
+#include "Falloff.h"
 #include "../Geometry/Bounds2.h"
 #include "../Linear/Vector2.h"
 
 namespace editor {
 
 struct PathCorner;
+struct PickedNodes;
+
+/// Which extreme of a path to ask for.
+///
+/// Use when: finding the place a path reaches furthest left, right, up or down
+/// Tags: side, extreme, leftmost, rightmost, topmost, bottommost
+/// Node: planned (pathSide)
+enum class PathSide { left, right, top, bottom };
+
+/// The place on a path nearest a point: its progress (share of length, 0…1), the point and the
+/// distance to it (in the metric the search was made in).
+///
+/// Use when: grabbing a stroke with a pointer; attaching a dot or a serif to the nearest place
+/// Tags: project onto path, nearest place, closest point on path, snap
+/// Node: planned (projectOntoPath)
+struct PathProjection {
+    float progress = 0;
+    Vector2 point;
+    float distance = 0;
+
+    bool operator==(const PathProjection&) const = default;
+};
+
+/// Where a path crosses a line: the progress on the path, the parameter along the line (0 at
+/// `lineStart`, 1 at `lineEnd`) and the point.
+///
+/// Use when: cutting a path where a guide line crosses it
+/// Tags: line intersection, path line crossing, ray cast, cut at line
+/// Node: planned (pathLineCrossings)
+struct PathLineCrossing {
+    float progress = 0;
+    float lineParameter = 0;
+    Vector2 point;
+
+    bool operator==(const PathLineCrossing&) const = default;
+};
+
+/// Where a path crosses a circle: the progress on the path and the point.
+///
+/// Use when: trimming a stroke where it enters a round cap; finding the places a path is a given
+///   distance from a point
+/// Tags: circle intersection, path circle crossing, trim at radius
+/// Node: planned (pathCircleCrossings)
+struct PathCircleCrossing {
+    float progress = 0;
+    Vector2 point;
+
+    bool operator==(const PathCircleCrossing&) const = default;
+};
+
+/// A circular arc a path is made of within some threshold, with the span of the path it covers
+/// (shares of length, 0…1).
+///
+/// Use when: exporting a path to a machine that cuts only lines and arcs; rounding a path to arcs
+/// Tags: arc fit, biarc, circular arcs of a path, G-code arcs
+/// Node: planned (pathArcs)
+struct PathArc {
+    CircularArcPiece arc;
+    float startProgress = 0;
+    float endProgress = 0;
+};
 
 /// How a path's node joins the pieces either side of it, as a pen tool keeps it while editing:
 /// free handles, handles on one line, or handles on one line and of equal length.
@@ -182,6 +244,37 @@ public:
     Path2D withNodeKind(NodeKind kind, Vector2 metric = Vector2(1, 1)) const;
     Path2D withHandleMoved(int nodeIndex, HandleSide side, Vector2 to, Vector2 metric = Vector2(1, 1)) const;
 
+    // MARK: Places by progress (Path2D+Analysis.cpp)
+    //
+    // A progress is a share of the path's length measured in `metric` (see `MeasuredPath2D`); the
+    // functions measure the path when called, so call `MeasuredPath2D` yourself to ask many times.
+
+    std::vector<float> extremaProgresses(Vector2 metric = Vector2(1, 1)) const;
+    std::vector<float> inflectionProgresses(Vector2 metric = Vector2(1, 1)) const;
+    float progressOfSide(PathSide side, Vector2 metric = Vector2(1, 1)) const;
+    float curvatureAt(float progress, Vector2 metric = Vector2(1, 1)) const;
+    Vector2 normalAt(float progress, Vector2 metric = Vector2(1, 1)) const;
+    OsculatingCircle osculatingCircleAt(float progress, Vector2 metric = Vector2(1, 1)) const;
+    Path2D moldedAt(float progress, Vector2 destination, Vector2 metric = Vector2(1, 1)) const;
+    PathProjection projection(Vector2 target, Vector2 metric = Vector2(1, 1)) const;
+    std::function<float(float)> nearnessTo(
+        const std::vector<float>& progresses, float reach, Falloff falloff = Falloff::smooth,
+        Vector2 metric = Vector2(1, 1)) const;
+
+    // MARK: Crossings and arcs by progress (Path2D+Intersections.cpp)
+
+    std::vector<PathLineCrossing> lineCrossings(Vector2 lineStart, Vector2 lineEnd, bool withinSegment = true,
+                                                Vector2 metric = Vector2(1, 1)) const;
+    std::vector<PathCircleCrossing> circleCrossings(Vector2 centre, float radius, Vector2 metric = Vector2(1, 1)) const;
+    std::vector<PathArc> circularArcs(float threshold = 0.5f, Vector2 metric = Vector2(1, 1)) const;
+
+    // MARK: Picking nodes (Path2D+Picking.cpp)
+
+    int nodeCount() const;
+    PickedNodes pickingNodes(const std::vector<int>& nodeIndices) const;
+    PickedNodes pickingCubics(const std::vector<int>& pieceIndices) const;
+    PickedNodes pickingSection(float fromProgress, float toProgress, Vector2 metric = Vector2(1, 1)) const;
+
     // MARK: Reordering and mapping (Path2D+Reordering.cpp)
 
     Path2D reversed() const;
@@ -301,6 +394,17 @@ private:
     std::vector<std::optional<NodeKind>> nodeKindList;
 
     static bool isSamePointUpToRounding(Vector2 first, Vector2 second);
+};
+
+/// A path and a weight for each of its nodes (node 0 is `start`, then the end of each piece; a
+/// closed path's last piece ends on node 0): 1 for a node picked whole, 0 for one left out.
+///
+/// Use when: choosing the nodes an edit (a fillet, a soft move) will act on
+/// Tags: node selection, picked nodes, soft selection weights, select nodes
+/// Node: planned (selectNodes)
+struct PickedNodes {
+    Path2D path;
+    std::vector<float> weights;
 };
 
 /// A point where a path crosses itself, with the two pieces and the parameter on each.
