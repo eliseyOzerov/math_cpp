@@ -80,17 +80,17 @@ TEST(shapeBoundsCoverEveryOutline) {
 
 TEST(reversedPathRunsTheOtherWayRound) {
     Path2D square = rectanglePath(0, 0, 100, 100);
-    Path2D backwards = reversedPath(square);
+    Path2D backwards = square.reversed();
     EXPECT(isNear(backwards.signedArea(), -10000));
     EXPECT(backwards.isClosed());
     EXPECT(backwards.start == Vector2(0, 0));
     EXPECT(backwards.segments().front().end() == Vector2(0, 100));
-    EXPECT(isNear(reversedPath(backwards).signedArea(), 10000));
-    EXPECT(reversedPath(backwards).segments().size() == 4);
+    EXPECT(isNear(backwards.reversed().signedArea(), 10000));
+    EXPECT(backwards.reversed().segments().size() == 4);
     // A curve keeps its shape: the handles swap places.
     Path2D curve(Vector2(0, 0));
     curve.addCubic(Vector2(10, 20), Vector2(30, 20), Vector2(40, 0));
-    Path2D back = reversedPath(curve);
+    Path2D back = curve.reversed();
     EXPECT(back.start == Vector2(40, 0) && !back.isClosed());
     EXPECT(back.segments()[0].startHandle == Vector2(30, 20) && back.segments()[0].endHandle == Vector2(10, 20));
 }

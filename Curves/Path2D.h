@@ -35,6 +35,34 @@ struct PathCorner;
 /// Node: planned (setNodeKind)
 enum class NodeKind { corner, smooth, symmetric };
 
+/// Which way a quarter of an ellipse leaves its start: along the horizontal or along the
+/// vertical. It arrives along the other.
+///
+///     leaving vertically:   ╭──● to        leaving horizontally:   ●──╮
+///                           │                                          │
+///                      from ●                                       to ●
+///
+/// Use when: drawing rounded rectangles, pills and arches from end points, as a pen tool does
+/// Tags: heading, quarter direction, ellipse quarter, axis
+/// Node: planned (quarter)
+enum class Heading { horizontal, vertical };
+
+/// Which of a node's two handles: the one arriving (the end of the piece before it) or the one
+/// leaving (the start of the piece after it).
+///
+/// Use when: dragging one handle of a smooth node and letting its partner follow
+/// Tags: handle side, in handle, out handle, incoming, outgoing
+/// Node: planned (moveHandle)
+enum class HandleSide { incoming, outgoing };
+
+/// Which handle leads when a node's handles are lined up: the arriving one, the leaving one, or
+/// both (their directions averaged).
+///
+/// Use when: lining up a smooth node after one of its handles was moved
+/// Tags: handle lead, align handles, smooth node
+/// Node: planned (setNodeKind)
+enum class HandleLead { incoming, outgoing, both };
+
 /// A 2D path: a start point followed by straight lines and cubic Bézier curves, each beginning
 /// where the one before ended. Circle arcs are stored as cubics (`addArc`).
 ///
@@ -136,6 +164,29 @@ public:
     void addArc(Vector2 centre, float radius, Angle startAngle, Angle sweep);
     static float arcJoinTolerance(Vector2 centre, float radius);
     void close();
+
+    // MARK: Quarters, arches and joins (Path2D+Quarters.cpp)
+
+    /// The handle share of a quarter circle: 4/3·tan(90°/4) ≈ 0.5523.
+    static float circleQuarterTension();
+    std::optional<Heading> arrivalHeading() const;
+    void addQuarter(Vector2 to, std::optional<Heading> leaving = std::nullopt, float tension = circleQuarterTension());
+    void addArch(Vector2 to, float peakHeight, float tension = circleQuarterTension());
+    Path2D joined(const Path2D& next) const;
+
+    // MARK: Node kinds read from handles and handle edits (Path2D+NodeKinds.cpp)
+
+    NodeKind effectiveNodeKind(int nodeIndex, Vector2 metric = Vector2(1, 1)) const;
+    std::vector<NodeKind> effectiveNodeKinds(Vector2 metric = Vector2(1, 1)) const;
+    Path2D withNodeKind(NodeKind kind, const std::vector<int>& nodeIndices, Vector2 metric = Vector2(1, 1)) const;
+    Path2D withNodeKind(NodeKind kind, Vector2 metric = Vector2(1, 1)) const;
+    Path2D withHandleMoved(int nodeIndex, HandleSide side, Vector2 to, Vector2 metric = Vector2(1, 1)) const;
+
+    // MARK: Reordering and mapping (Path2D+Reordering.cpp)
+
+    Path2D reversed() const;
+    Path2D startingAtNode(int nodeIndex) const;
+    Path2D mapped(const std::function<Vector2(Vector2)>& pointMap) const;
 
     // MARK: Pieces for the measurements (Path2D.cpp)
 

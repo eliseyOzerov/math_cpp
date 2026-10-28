@@ -8,24 +8,6 @@
 
 namespace editor {
 
-/// `path` run backwards (see the declaration in Shape2D.h).
-Path2D reversedPath(const Path2D& path) {
-    std::vector<Path2D::Edge> edges = path.edges();
-    if (path.isClosed() && !(path.currentPoint() == path.start)) {
-        edges.push_back(Path2D::Edge{path.currentPoint(), Path2D::Segment::line(path.start)});
-    }
-    Path2D result(edges.empty() ? path.start : edges.back().segment.end());
-    for (auto edge = edges.rbegin(); edge != edges.rend(); ++edge) {
-        if (std::optional<CubicBezier<Vector2>> cubic = edge->cubic()) {
-            result.addCubic(cubic->endHandle, cubic->startHandle, cubic->start);
-        } else {
-            result.addLine(edge->start);
-        }
-    }
-    if (path.isClosed()) result.close();
-    return result;
-}
-
 /// The signed area of the region as the sum of its outlines' signed areas: counterclockwise
 /// outlines add, clockwise ones take away (`Path2D::signedArea`).
 ///
@@ -81,7 +63,7 @@ Bounds2 Shape2D::bounds() const {
     return total;
 }
 
-/// The shape with every outline run backwards (`reversedPath`), the fill rule kept.
+/// The shape with every outline run backwards (`Path2D::reversed`), the fill rule kept.
 ///
 /// Use when: turning a whole shape inside out in direction; flipping a mirrored shape
 /// Tags: reverse shape, reverse contours, flip winding
@@ -89,7 +71,7 @@ Bounds2 Shape2D::bounds() const {
 Shape2D Shape2D::reversed() const {
     Shape2D result;
     result.fillRule = fillRule;
-    for (const Path2D& outline : outlines) result.outlines.push_back(reversedPath(outline));
+    for (const Path2D& outline : outlines) result.outlines.push_back(outline.reversed());
     return result;
 }
 
@@ -117,7 +99,7 @@ Shape2D Shape2D::orientedForFill() const {
     for (size_t index = 0; index < outlines.size(); index += 1) {
         bool shouldBePositive = index == outer;
         bool isPositive = areas[index] >= 0;
-        result.outlines.push_back(isPositive == shouldBePositive ? outlines[index] : reversedPath(outlines[index]));
+        result.outlines.push_back(isPositive == shouldBePositive ? outlines[index] : outlines[index].reversed());
     }
     return result;
 }
