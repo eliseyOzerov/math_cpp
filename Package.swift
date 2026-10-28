@@ -1,8 +1,7 @@
 // swift-tools-version:5.9
 // math_cpp for Swift and any SwiftPM host: one library per module, so a product takes only the
 // modules it needs (Docs/Foundations.md has the layers). The C++ is used through C++ interop
-// (`.interoperabilityMode(.Cxx)` in the Swift target that imports it). Curves2D, the double-precision
-// 2D curves ported from fountain-ts, keeps its own products CCurves and Curves.
+// (`.interoperabilityMode(.Cxx)` in the Swift target that imports it).
 import PackageDescription
 
 /// -ffp-contract=off: no fused multiply-adds, so results agree to the last bit on every machine.
@@ -36,20 +35,16 @@ let modules: [(String, [String])] = [
 
 let package = Package(
   name: "math_cpp",
-  // std::to_chars for doubles (Curves2D formats numbers as JS does) needs macOS 13.3.
+  // The oldest systems it is built and tested for.
   platforms: [.macOS("13.3"), .iOS("16.3")],
   products: [.library(name: "MathKernels", targets: ["MathKernels"])]
-    + modules.map { .library(name: "Math" + $0.0, targets: ["Math" + $0.0]) }
-    + [
-      .library(name: "CCurves", targets: ["CCurves"]),
-      .library(name: "Curves", targets: ["Curves"]),
-    ],
+    + modules.map { .library(name: "Math" + $0.0, targets: ["Math" + $0.0]) },
   targets: [
     // Header-only: the one source in Swift/MathKernels includes the kernels so the target builds.
     .target(
       name: "MathKernels",
       path: ".",
-      exclude: ["Tests", "Tools", "Docs", "Curves2D", "Swift/LinearSmoke", "Swift/FieldsSmoke", "README.md", "AGENTS.md", "LICENSE", "Makefile", ".gitignore"]
+      exclude: ["Tests", "Tools", "Docs", "Swift/LinearSmoke", "Swift/FieldsSmoke", "README.md", "AGENTS.md", "LICENSE", "Makefile", ".gitignore"]
         + modules.map { $0.0 },
       sources: ["Swift/MathKernels"],
       publicHeadersPath: "Kernels",
@@ -58,31 +53,12 @@ let package = Package(
   ]
     + modules.map { module($0.0, $0.1) }
     + [
-      .target(
-        name: "CCurves",
-        path: "Curves2D",
-        exclude: ["tests", "swift", "src/wasm.d.ts", "README.md", "DATA.md", "CMakeLists.txt", "LICENSE", "THIRD_PARTY_NOTICES.md"],
-        sources: ["src"],
-        publicHeadersPath: "include",
-        // Optimized in debug builds too: callers' hot loops (a font's ink) run ~10× slower at -O0.
-        cxxSettings: [.unsafeFlags(["-O3"], .when(configuration: .debug))]
-      ),
-      .target(name: "CurvesCxx", dependencies: ["CCurves"], path: "Curves2D/swift/CurvesCxx"),
-      .target(
-        name: "Curves", dependencies: ["CurvesCxx"], path: "Curves2D/swift/Curves",
-        swiftSettings: [.interoperabilityMode(.Cxx)]
-      ),
       .testTarget(
         name: "LinearSmoke", dependencies: ["MathLinear"], path: "Swift/LinearSmoke",
         swiftSettings: [.interoperabilityMode(.Cxx)]
       ),
       .testTarget(
         name: "FieldsSmoke", dependencies: ["MathFields"], path: "Swift/FieldsSmoke",
-        swiftSettings: [.interoperabilityMode(.Cxx)]
-      ),
-      .testTarget(name: "CCurvesSmoke", dependencies: ["CCurves"], path: "Curves2D/swift/Smoke"),
-      .testTarget(
-        name: "CurvesSmoke", dependencies: ["Curves"], path: "Curves2D/swift/CurvesSmoke",
         swiftSettings: [.interoperabilityMode(.Cxx)]
       ),
     ],

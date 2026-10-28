@@ -39,11 +39,11 @@ const std::map<std::string, Module>& moduleOfFolder() {
     return modules;
 }
 
-/// Top-level folders that are not modules: tests, tools, docs, the Swift package's wrappers, the
-/// 2D curves package (Curves2D, its own layout and tests) and build output.
+/// Top-level folders that are not modules: tests, tools, docs, the Swift package's wrappers and
+/// build output.
 const std::set<std::string>& foldersWithoutModule() {
     static const std::set<std::string> folders = {
-        "Tests", "Tools", "Docs", "Swift", "Curves2D", "build", ".build", ".git", ".swiftpm",
+        "Tests", "Tools", "Docs", "Swift", "build", ".build", ".git", ".swiftpm",
     };
     return folders;
 }

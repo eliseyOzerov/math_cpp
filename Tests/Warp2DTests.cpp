@@ -1,4 +1,4 @@
-// Tests of Curves/Warp2D. Golden values are transcribed from graphics_cpp Curves2D/tests/golden/warp.json
+// Tests of Curves/Warp2D. Golden values are transcribed from graphics_cpp tests/golden/warp.json
 // (affine m = [1.1, 0.2, -0.3, 0.9, 5, -7], mesh, scatter, wavelength, meshGrid); the rest are worked by hand.
 #include <cmath>
 #include <vector>

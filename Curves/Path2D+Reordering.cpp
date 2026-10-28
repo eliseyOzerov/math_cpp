@@ -1,5 +1,5 @@
 // Running a path backwards, starting a closed path elsewhere, and moving every point
-// (graphics_cpp Curves2D path.cpp `reverse`, `startAt`, `map`).
+// (graphics_cpp path.cpp `reverse`, `startAt`, `map`).
 #include "../Linear/MathProblem.h"
 #include "Path2D.h"
 #include "Shape2D+Pieces.h"

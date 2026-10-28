@@ -1,4 +1,4 @@
-// See Morph2D.h. Ported from graphics_cpp's Curves2D morph.cpp.
+// See Morph2D.h. Ported from graphics_cpp's morph.cpp.
 #include "Morph2D.h"
 
 #include <algorithm>

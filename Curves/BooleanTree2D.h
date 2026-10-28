@@ -4,7 +4,7 @@
 // piece of the outline knows the operand it was cut from, which is what makes the places where
 // operands meet selectable: a corner between a stem and a bowl is the corner whose pieces come
 // from the stem's operand and the bowl's, wherever the curves happen to cross. Ported from
-// graphics_cpp's `Bool` (Curves2D bool.hpp/bool.cpp).
+// graphics_cpp's `Bool` (graphics_cpp bool.hpp/bool.cpp).
 //
 // Operations, over the operands in order: unite (inside any), intersect (inside all), subtract
 // (inside the first and none of the rest), exclude (inside an odd number) and cut (the first

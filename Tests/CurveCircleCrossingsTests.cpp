@@ -1,4 +1,4 @@
-// Tests of Curves/CurveCircleCrossings. Golden values are transcribed from graphics_cpp Curves2D/tests/golden/
+// Tests of Curves/CurveCircleCrossings. Golden values are transcribed from graphics_cpp tests/golden/
 // intersect.json (circleCrossings, curveCrossings), compared at 1e-4.
 #include <cmath>
 

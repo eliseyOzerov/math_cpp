@@ -1,5 +1,5 @@
 // An affine map of the plane, defined (declared in AffineTransform2.h). Ported from graphics_cpp's
-// `Affine` (Curves2D/src/geometry.cpp), in floats, with Angle for the angles.
+// `Affine` (graphics_cpp src/geometry.cpp), in floats, with Angle for the angles.
 #include "AffineTransform2.h"
 
 #include <cmath>

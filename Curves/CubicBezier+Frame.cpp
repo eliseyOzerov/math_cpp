@@ -1,6 +1,6 @@
 // A flat cubic seen in its own frame: where one coordinate reaches a value, the curve laid along
 // a line, the tight box round it in that frame, whether it is straight, and which of the six
-// shape classes it belongs to. Ported from graphics_cpp's Curves2D (bezier.cpp: coordRoots,
+// shape classes it belongs to. Ported from graphics_cpp's (bezier.cpp: coordRoots,
 // align, tightBox, canonical, name; geometry.cpp: isLine), after Pomax, "A Primer on Bézier
 // Curves" (https://pomax.github.io/bezierinfo), and Stone and DeRose, "A Geometric
 // Characterization of Parametric Cubic Curves" (ACM Transactions on Graphics, 1989).

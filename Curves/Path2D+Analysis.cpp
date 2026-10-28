@@ -1,7 +1,7 @@
 // A path asked about places along it: where it is level or upright, where it changes its bend,
 // the furthest it reaches, how tight it turns, the circle that matches it, dragging the curve
 // itself, the nearest place to a point and how near each place is to some others. Ported from
-// graphics_cpp's analysis.cpp (Curves2D), where these were free functions on `Path`; here they
+// graphics_cpp's analysis.cpp, where these were free functions on `Path`; here they
 // are members of `Path2D` that measure a copy of the path in a `metric` and answer in progress
 // (a share of length, see `MeasuredPath2D`).
 #include <algorithm>

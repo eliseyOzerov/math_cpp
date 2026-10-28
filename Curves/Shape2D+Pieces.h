@@ -2,8 +2,7 @@
 // with a flag for the ones that are straight lines. Path2D keeps lines and cubics apart, which is
 // right for storing a path but means every step of a boolean would branch on the kind; here a line
 // is a cubic with its handles at a third and two thirds (the same shape `Path2D::evenlyPacedCubic`
-// makes), so one piece type can be cut, reversed and measured. Ported from graphics_cpp's `Piece`
-// (Curves2D).
+// makes), so one piece type can be cut, reversed and measured. Ported from graphics_cpp's `Piece`.
 #pragma once
 
 #include <functional>

@@ -1,4 +1,4 @@
-// The boolean operand tree (graphics_cpp Curves2D bool.cpp).
+// The boolean operand tree (graphics_cpp bool.cpp).
 #include <cmath>
 
 #include "../Linear/MathProblem.h"

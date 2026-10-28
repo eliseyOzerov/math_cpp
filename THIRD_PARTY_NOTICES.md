@@ -2,7 +2,7 @@
 
 ## Pomax Bezier Work
 
-curves is based on the Bezier curve work by Pomax:
+The 2D curve work in `Curves` (ported from graphics_cpp) builds on the Bézier curve work by Pomax:
 
 - A Primer on Bezier Curves: https://pomax.github.io/bezierinfo/
 - Bezier.js API: https://pomax.github.io/bezierjs/

@@ -1,6 +1,6 @@
 // A place on a 2D path or a list of curves, found by a search: which piece, where on it, the
 // point and how far it is from what was searched for. Ported from graphics_cpp's `Nearest`,
-// `Pick` and `PathProjection` (Curves2D), which all carried these four values.
+// `Pick` and `PathProjection`, which all carried these four values.
 #pragma once
 
 #include "../Linear/Vector2.h"

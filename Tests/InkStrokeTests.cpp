@@ -1,5 +1,5 @@
 // Tests of Curves/InkStroke: the nib stamped along a stroke, its sweeps round corners, its cut ends and tapers, and
-// the hulls that join the stamps. Values marked "golden" are transcribed from graphics_cpp's Curves2D/tests/golden/
+// the hulls that join the stamps. Values marked "golden" are transcribed from graphics_cpp's tests/golden/
 // ink.json (double precision; the case number is given). The hull counts and run-on points agree; only the values the
 // original computes from bisections would not, and none of those are used here.
 #include <algorithm>

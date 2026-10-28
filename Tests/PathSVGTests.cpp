@@ -1,5 +1,5 @@
 // Tests of Curves/PathSVG: reading and writing SVG path data. The golden cases are from graphics_cpp's
-// Curves2D/tests/golden/svg.json; the strings it writes are not compared (JS number printing differs), so
+// graphics_cpp tests/golden/svg.json; the strings it writes are not compared (JS number printing differs), so
 // written text is tested by reading it back.
 #include <string>
 #include <vector>

@@ -5,7 +5,7 @@
 // plane; an untrimmed one is the end stamp's far side, in pieces of equal length. The contour runs along the left
 // rail, across the end, back along the right rail and across the start: clockwise with y up.
 //
-// Ported from graphics_cpp Curves2D curves/outline (outline.hpp, outline.cpp; fountain-ts/src/ink/outline.ts), in
+// Ported from graphics_cpp curves/outline (outline.hpp, outline.cpp; fountain-ts/src/ink/outline.ts), in
 // floats. Bit-level agreement with the double-precision goldens is not expected: the rail searches decide on the last
 // bit, so the plan (and so the number of pieces) can differ at a tangency, and `planKey` strings can differ with it.
 //

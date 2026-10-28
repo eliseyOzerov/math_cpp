@@ -1,5 +1,5 @@
 // Tests of Curves/Profile.handles (waves and keys) and Curves/Falloff.handles. Golden values are transcribed from
-// graphics_cpp Curves2D/tests/golden/profile.json and geometry-free selection falloff formulas.
+// graphics_cpp tests/golden/profile.json and geometry-free selection falloff formulas.
 #include <cmath>
 #include <vector>
 

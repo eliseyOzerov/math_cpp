@@ -1,6 +1,6 @@
 // Attaching a path to what is drawn already, by pairs: each pair says that the path's point at
 // some progress lies on a target. A target is a place on another path, a fixed point, or where two
-// paths cross. Ported from graphics_cpp's attach.cpp (Curves2D), `attach`, `target` and `place`.
+// paths cross. Ported from graphics_cpp's attach.cpp, `attach`, `target` and `place`.
 //
 // How many pairs decide how the path moves, always as little as they need:
 //   1  shifted onto the target;

@@ -1,7 +1,7 @@
 // Tests of the cubic Bézier's frame and shape functions, sampling, projection, curves through
 // points and arcs from end points (Curves/CubicBezier+Frame, +Sampling, +Projection, +Through,
-// +ArcFromEnds), ported from graphics_cpp's Curves2D. Hand-worked values come first; values
-// marked "golden" are transcribed from Curves2D/tests/golden/bezier.json and geometry.json.
+// +ArcFromEnds), ported from graphics_cpp. Hand-worked values come first; values
+// marked "golden" are transcribed from graphics_cpp tests/golden/bezier.json and geometry.json.
 #include <cmath>
 #include <vector>
 

@@ -1,5 +1,5 @@
 // How wide a nib's ink is, the transition keys that shape thick to thin, and shapes given loosely (Nib.h).
-// Ported from graphics_cpp Curves2D curves/nib (nib.cpp), in floats.
+// Ported from graphics_cpp curves/nib (nib.cpp), in floats.
 #include <algorithm>
 #include <cmath>
 #include <limits>

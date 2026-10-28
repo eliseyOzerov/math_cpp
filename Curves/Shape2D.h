@@ -1,6 +1,6 @@
 // A filled region of the plane: closed outlines, where some may be holes in others. Booleans,
 // corners, warps and ink outlines read and build these. Replaces graphics_cpp's
-// `std::vector<Contour>` (Curves2D).
+// `std::vector<Contour>`.
 #pragma once
 
 #include <vector>

@@ -1,5 +1,5 @@
 // A map of the plane that keeps straight lines straight and parallel lines parallel: a turn, a
-// scaling, a shear and a move, in any mix. Ported from graphics_cpp's `Affine` (Curves2D), in
+// scaling, a shear and a move, in any mix. Ported from graphics_cpp's `Affine`, in
 // floats. Declared here, defined in AffineTransform2.cpp.
 #pragma once
 

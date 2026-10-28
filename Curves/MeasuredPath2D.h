@@ -1,6 +1,6 @@
 // A path with its lengths measured, so places on it can be named by how far along they are: the
 // halfway point of a curve, the stretch between 20% and 60%, the node a third of the way round.
-// Ported from graphics_cpp's `Path` (Curves2D path.cpp/path.hpp): its `locate`, `progress`, `at`,
+// Ported from graphics_cpp's `Path` (graphics_cpp path.cpp/path.hpp): its `locate`, `progress`, `at`,
 // `direction`, `slice`, `divide`, `cut`, `aperture`, `crossY`… and `crossings`.
 //
 // Graphics_cpp's `Path` was one immutable type that both built and measured; here `Path2D` builds

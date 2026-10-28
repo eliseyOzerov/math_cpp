@@ -18,14 +18,13 @@ modules in lower layers. `make` builds each as its own static library
 | L1 | `Numerics` | Linear | roots, quadrature, particle integrators, seeded random numbers |
 | L1 | `Color` | Kernels, Linear | sRGB, wavelength colour |
 | L2 | `Geometry` | Linear | bounds, lines, planes, rays, segments, triangles, spheres, intersections |
-| L2 | `Curves` | Geometry, Numerics, Linear | Bézier, B-spline, Catmull–Rom, 2D paths and polygons, offsets, fitting |
+| L2 | `Curves` | Geometry, Numerics, Linear | Bézier, B-spline, Catmull–Rom, 2D paths and shapes, booleans, offsets, fitting, ink strokes, SVG paths |
 | L3 | `Mesh` | Curves, Geometry, Linear | Mesh, HalfEdgeMesh, primitives, revolve, sweep, shading, spherical panels |
 | L3 | `Fields` | Mesh, Curves, Geometry, Numerics, Linear | signed distance fields, noise, surface nets, narrow-band meshing |
 | L3 | `Optics` | Color, Geometry, Linear | refraction, Fresnel, microfacets, dispersion, caustics |
 | L4 | `Physics` | Linear | damped springs, mass properties |
 | L4 | `Animation` | Linear | bones, skeletons, poses |
 | L4 | `Shaders` | — (the kernels as text) | shader graphs, the node catalogue, the compiler and its Metal backend |
-| — | `Curves2D` | — | 2D curves in doubles, ported from fountain-ts (see below) |
 | later | `Signal`, `Statistics`, `Optimization`, dense linear algebra, `Decimal` | | FFT and DSP; distributions and fits; minimisers; large matrices; exact money arithmetic |
 
 The "Uses" column is what a module includes directly; the Makefile's `DEPENDS_<Module>` and
@@ -152,20 +151,19 @@ tests check. Only what is Metal API stays in the backend: the uniforms, the vert
 wrappers, textures, and `loopAccumulate`, which takes a function. `make shaders` sends the
 preview of every node kind through Metal's runtime compiler and builds its pipeline.
 
-## Curves2D
+## The 2D curves
 
-`Curves2D` is graphics_cpp, moved here with its history: 2D curves in doubles, ported from
-fountain-ts, with a C API (`include/curves.h`) and the SwiftPM products `CCurves` and `Curves`.
-It keeps its own rules until Fountain moves off fountain-ts: fountain-ts is its reference, it
-rounds like JavaScript (`-ffp-contract=off` by a pragma in its sources), a V8-style `hypot`,
-and golden cases in `Curves2D/tests/golden`. It builds with CMake (`cmake -S Curves2D -B
-Curves2D/build`), including a wasm build with Emscripten. Then it merges with `Curves`.
+The 2D curve work of graphics_cpp (itself ported from fountain-ts) was rewritten into `Curves`
+to these rules: floats, namespace `editor`, full names, `MathProblem` for broken
+preconditions. The editing layer (selection, node edits), the C API and the wasm build were
+left behind, and so was bit-parity with fountain-ts: lengths come from adaptive quadrature and
+agree to about 1e-4, and boolean tolerances scale with the shapes. The tests transcribe
+graphics_cpp's golden cases with a tolerance. graphics_cpp stays frozen as Fountain's copy.
 
 ## Each module names its reference
 
 Most modules are checked against Marble's Swift engine (Marble's parity tests) until the
-Swift engine retires. A module may name a different reference: `Curves2D` is checked against
-fountain-ts. The module's doc says which.
+Swift engine retires. A module may name a different reference; the module's doc says which.
 
 ## Self-contained
 

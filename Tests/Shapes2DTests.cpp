@@ -1,6 +1,6 @@
 // Tests of Curves/Shapes2D: bowed sides, soft polylines, ovals, knobs, runs, bends and lobes.
 // Values are worked out by hand in the comments, or taken from graphics_cpp's golden file
-// Curves2D/tests/golden/shape.json (double precision, so compared with about 1e-3).
+// graphics_cpp tests/golden/shape.json (double precision, so compared with about 1e-3).
 #include <cmath>
 #include <vector>
 

@@ -1,5 +1,5 @@
 // The point of a flat cubic (or of a list of them) nearest a given point. Ported from
-// graphics_cpp's Curves2D (geometry.cpp `nearest`, bezier.cpp `project`).
+// graphics_cpp's (geometry.cpp `nearest`, bezier.cpp `project`).
 #include <cmath>
 #include <limits>
 

@@ -1,4 +1,4 @@
-// See Shapes2D.h. Ported from graphics_cpp's Curves2D shape.cpp.
+// See Shapes2D.h. Ported from graphics_cpp's shape.cpp.
 #include "Shapes2D.h"
 
 #include <algorithm>

@@ -1,6 +1,6 @@
 // Reading a flat cubic at a parameter and cutting it by length: every level of the de Casteljau
 // construction, a lookup table, the unit tangent and normal, the osculating circle, and splitting
-// at shares of arc length. Ported from graphics_cpp's Curves2D (bezier.cpp: casteljau, lut,
+// at shares of arc length. Ported from graphics_cpp's (bezier.cpp: casteljau, lut,
 // tangent, normal, osculating; geometry.cpp: cutAt, splitEven), after Pomax, "A Primer on Bézier
 // Curves" (https://pomax.github.io/bezierinfo).
 #include <algorithm>

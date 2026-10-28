@@ -1,5 +1,5 @@
 // Tests of Numerics/LinearSystem and Curves/BezierCurveN (graphics_cpp curves/bezn): hand-worked
-// values, the golden cases of Curves2D/tests/golden/bezn.json, and the properties that must always hold.
+// values, the golden cases of graphics_cpp tests/golden/bezn.json, and the properties that must always hold.
 #include <cmath>
 #include <vector>
 

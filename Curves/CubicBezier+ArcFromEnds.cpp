@@ -1,6 +1,6 @@
 // Circular arcs given by their end points: a single cubic from two end points and the directions
 // there, and the cubics of an arc from its end points and the angle it leaves the chord at.
-// Ported from graphics_cpp's Curves2D geometry.cpp (arcCubic, arcCubics); the arcs themselves are
+// Ported from graphics_cpp's geometry.cpp (arcCubic, arcCubics); the arcs themselves are
 // made by the existing `circularArc`.
 #include <cmath>
 

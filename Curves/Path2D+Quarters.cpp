@@ -1,5 +1,5 @@
 // Quarters of an ellipse by end point and heading, arches over a peak, and joining two paths
-// (graphics_cpp Curves2D path.cpp `quarter`, `arch`, `join`).
+// (graphics_cpp path.cpp `quarter`, `arch`, `join`).
 #include <cmath>
 
 #include "../Linear/MathProblem.h"

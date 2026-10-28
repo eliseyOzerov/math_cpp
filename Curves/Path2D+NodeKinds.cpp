@@ -1,4 +1,4 @@
-// Node kinds read off the handles, and edits that keep them (graphics_cpp Curves2D path.cpp
+// Node kinds read off the handles, and edits that keep them (graphics_cpp path.cpp
 // `kind`, `kinds`, `withKind`, `handle`, `aligned`).
 #include <algorithm>
 #include <cmath>
@@ -12,7 +12,7 @@ namespace editor {
 namespace {
 
 /// How far the directions of a node's two handles may differ, as the sine of the angle between
-/// them, and still count as one line: a millionth, the tolerance Curves2D used.
+/// them, and still count as one line: a millionth, the tolerance graphics_cpp used.
 constexpr float collinearTolerance = 1e-6f;
 
 /// A handle shorter than this has no direction of its own.

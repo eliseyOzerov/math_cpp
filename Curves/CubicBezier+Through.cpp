@@ -1,7 +1,7 @@
 // Curves made to pass through a point: a quadratic or a cubic through three points, and molding
 // (dragging a point on an existing cubic). All use the projection identity of Pomax, "A Primer
 // on Bézier Curves" (https://pomax.github.io/bezierinfo), sections "Curve fitting" and "Molding
-// a curve"; ported from graphics_cpp's Curves2D bezier.cpp (quadThrough, cubicThrough, mold).
+// a curve"; ported from graphics_cpp's bezier.cpp (quadThrough, cubicThrough, mold).
 #include <algorithm>
 #include <cmath>
 

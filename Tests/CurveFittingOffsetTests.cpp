@@ -1,7 +1,7 @@
 // Tests of the fitting, hull, clipping and offset functions ported from graphics_cpp curves/fit and
 // curves/offset (slice S2): single-piece fits, fits with corners, quadratic approximation, convex hulls,
 // half-plane clipping, circles through three points, offsets with a distance function, circular arcs
-// and stroke outlines. Golden values are from Curves2D/tests/golden/{fit,offset}.json (a left-positive
+// and stroke outlines. Golden values are from graphics_cpp tests/golden/{fit,offset}.json (a left-positive
 // distance there is a right-positive one here, so its sign is flipped).
 #include <algorithm>
 #include <cmath>

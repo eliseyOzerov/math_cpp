@@ -4,7 +4,7 @@
 // Keys are data: (t, value) points with optional bezier handles, like animation keyframes, so they save as JSON and
 // a panel can drag them, and the value can be any type (a nib morphs between shapes this way).
 //
-// Ported from graphics_cpp Curves2D curves/profile (profile.hpp, profile.cpp), in floats.
+// Ported from graphics_cpp curves/profile (profile.hpp, profile.cpp), in floats.
 //
 // Known overlap (as in the original): a wave given where keys are wanted is sampled (keysOf), and keys multiply by
 // resampling (keysTimes) where waves multiply exactly.

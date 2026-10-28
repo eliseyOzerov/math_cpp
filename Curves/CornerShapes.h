@@ -1,6 +1,6 @@
 // Corners of filled shapes and what goes in their place: pits and peaks, corners replaced by any
 // piece, corners shaped by a tilt, a profile or a curve drawn in the corner's own frame, and caps for
-// the ends of strokes. Ported from graphics_cpp curves/corners.cpp (Curves2D). The fixed fillet and
+// the ends of strokes. Ported from graphics_cpp curves/corners.cpp. The fixed fillet and
 // chamfer of a single path are `Path2D::filleted` and `Path2D::chamfered`; everything here works on a
 // `Shape2D` (several outlines) and accepts any replacement.
 //

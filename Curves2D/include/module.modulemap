@@ -1,4 +1,0 @@
-module CCurves {
-  header "curves.h"
-  export *
-}

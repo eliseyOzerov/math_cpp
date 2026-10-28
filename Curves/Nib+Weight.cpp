@@ -1,5 +1,5 @@
 // Weight compensation: how heavy the nib is for each segment of a stroke, and the keys that ease between them
-// (Nib.h). Ported from graphics_cpp Curves2D curves/nib (nib.cpp), in floats.
+// (Nib.h). Ported from graphics_cpp curves/nib (nib.cpp), in floats.
 #include <algorithm>
 #include <cmath>
 

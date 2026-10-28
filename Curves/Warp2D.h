@@ -1,6 +1,6 @@
 // Warps: any map of the plane applied to curves and paths, and the warps made of it: bows across a
 // height (a spine), shifts by a function of height, wobble, a smooth noise field, and a mesh of nine
-// points over a box. Ported from graphics_cpp's Curves2D warp (warp.hpp, warp.cpp).
+// points over a box. Ported from graphics_cpp's warp (warp.hpp, warp.cpp).
 //
 // A cubic is warped by mapping its ends and carrying each handle by the warp's derivative there (a
 // numerical Jacobian), so the curve leaves and arrives in the warped directions and joins stay smooth

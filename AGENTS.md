@@ -16,7 +16,6 @@ must give the same result on every machine.
   has `Tests/KernelChecks/<Header>.metal` and a GPU agreement case in `Tests/GPUAgreement/`.
   After changing a kernel, run `make shader-library` (a test fails when
   `Shaders/ShaderLibrarySource.cpp` is stale).
-- `Curves2D/` keeps its own layout, rules and reference (fountain-ts); see its README.
 
 ## Self-contained
 
@@ -63,7 +62,7 @@ make test
 
 Unit tests are in `Tests/*.cpp` (`TEST(name) { ... }`, `Tests/Testing.h`). Compare floats with
 a tolerance unless the result is exact. `swift build` and `swift test` check the SwiftPM
-products. `Curves2D` builds and tests with CMake (README.md).
+products.
 
 ## Git
 

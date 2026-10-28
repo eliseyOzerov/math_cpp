@@ -1,5 +1,5 @@
 // Tests of Curves/Nib: naming a nib, its corners and stamp, the width of its ink, the transition keys and the weight
-// compensation. Values marked "golden" are transcribed from graphics_cpp's Curves2D/tests/golden/nib.json (computed
+// compensation. Values marked "golden" are transcribed from graphics_cpp's tests/golden/nib.json (computed
 // in double precision, compared here with a float tolerance); the rest are worked by hand.
 #include <cmath>
 #include <vector>

@@ -7,7 +7,7 @@
 // Where the ends do not lie on the line the lobe should hang off (B's lower lobe starts on the upper
 // lobe, not on the stem), `axis` names that line instead.
 //
-// Ported from graphics_cpp's Curves2D shape.hpp/shape.cpp (itself from fountain-ts/src/curves/shape.ts).
+// Ported from graphics_cpp's shape.hpp/shape.cpp (itself from fountain-ts/src/curves/shape.ts).
 // Differences: float, `Path2D` has no metric, so builders that take a `metric` work in it and hand
 // back plain coordinates; the TS option objects are the structs below.
 #pragma once

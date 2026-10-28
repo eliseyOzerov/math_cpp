@@ -4,7 +4,7 @@
 // on and set the planes that trim them, head each point along the stroke, stamp the nib at each, and join neighbouring
 // stamps by their hulls (their union is the ink).
 //
-// Ported from graphics_cpp Curves2D curves/ink (ink.hpp, ink.cpp; fountain-ts/src/ink/ink.ts), in floats. Bit-level
+// Ported from graphics_cpp curves/ink (ink.hpp, ink.cpp; fountain-ts/src/ink/ink.ts), in floats. Bit-level
 // agreement with the double-precision goldens is not expected: the bisections and rail searches of the original
 // decide on the last bit, so the ink's topology (the number of stamps in a sweep) can differ at a tangency.
 //

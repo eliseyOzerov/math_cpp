@@ -8,7 +8,7 @@
 // every path read is closed (its closing line is the path's implicit one). y stays as SVG has it
 // (down); flip with an affine map for y-up units.
 //
-// Ported from graphics_cpp's Curves2D svg.hpp/svg.cpp (fountain-ts/src/curves/svg.ts).
+// Ported from graphics_cpp's svg.hpp/svg.cpp (fountain-ts/src/curves/svg.ts).
 // Differences: float; a path read has no explicit closing piece; numbers are written fixed to
 // `digits` decimals with trailing zeros dropped (JS number printing is not reproduced).
 #pragma once

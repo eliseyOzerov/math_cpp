@@ -1,4 +1,4 @@
-// The ink of a stroke (InkStroke.h). Ported from graphics_cpp Curves2D curves/ink (ink.cpp), in floats.
+// The ink of a stroke (InkStroke.h). Ported from graphics_cpp curves/ink (ink.cpp), in floats.
 // The steps keep the original's order: sample, run the ends on, head, stamp, join.
 #include "InkStroke.h"
 

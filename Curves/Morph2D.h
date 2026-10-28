@@ -13,7 +13,7 @@
 // between it every segment exists. Known issue (inherited): a closed morph can show a small notch
 // at its start halfway through.
 //
-// Ported from graphics_cpp's Curves2D morph.hpp/morph.cpp (fountain-ts/src/curves/morph.ts).
+// Ported from graphics_cpp's morph.hpp/morph.cpp (fountain-ts/src/curves/morph.ts).
 // Differences: float; a path has no metric of its own, so `metric` is an argument; lines are
 // treated as cubics with handles at their thirds, and a closed path counts its closing line as a
 // piece; results are paths of cubics.

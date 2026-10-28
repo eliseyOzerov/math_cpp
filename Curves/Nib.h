@@ -7,7 +7,7 @@
 // heavier and diagonals a little lighter, by segment: every curve is a round, every line straight or diagonal by its
 // direction; where the factor changes at a node the size eases across `ramp` units centred on it.
 //
-// Ported from graphics_cpp Curves2D curves/nib (nib.hpp, nib.cpp; fountain-ts/src/ink/nib.ts), in floats.
+// Ported from graphics_cpp curves/nib (nib.hpp, nib.cpp; fountain-ts/src/ink/nib.ts), in floats.
 //
 // Decisions:
 // - The functions are statics of `Nib`, named in full: `Nib::from`, `Nib::stemNib`, `Nib::penOf`, `Nib::radii`...

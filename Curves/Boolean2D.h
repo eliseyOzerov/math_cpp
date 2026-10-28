@@ -1,5 +1,5 @@
 // Booleans of filled regions: union, intersection, difference, exclusion and cut, on outlines
-// made of lines and cubic curves. Ported from graphics_cpp's boolean.hpp and bool.hpp (Curves2D).
+// made of lines and cubic curves. Ported from graphics_cpp's boolean.hpp and bool.hpp.
 //
 // One algorithm for every operation, in three steps (the declarations are here; Boolean2D.cpp
 // holds the steps, Boolean2D+Operations.cpp the named operations on two shapes, and

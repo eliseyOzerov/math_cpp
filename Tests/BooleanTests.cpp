@@ -1,6 +1,6 @@
 // Tests of Curves/Boolean2D (unite, intersect, subtract, exclude, cut under a fill rule), Curves/Shape2D
 // measurements, and the polyline helpers. Hand-worked values come from squares of side 100; the circle
-// cases are transcribed from graphics_cpp Curves2D/tests/golden/boolean.json (a square [0,100]² against a
+// cases are transcribed from graphics_cpp tests/golden/boolean.json (a square [0,100]² against a
 // circle of radius 40 round (100, 50)), compared by area at a tolerance of 1e-3 because the outlines come out
 // in another order and with other start points.
 #include <cmath>

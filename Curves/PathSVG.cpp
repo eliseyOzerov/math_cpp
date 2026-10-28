@@ -1,4 +1,4 @@
-// See PathSVG.h. Ported from graphics_cpp's Curves2D svg.cpp.
+// See PathSVG.h. Ported from graphics_cpp's svg.cpp.
 #include "PathSVG.h"
 
 #include <cmath>

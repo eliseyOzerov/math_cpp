@@ -1,5 +1,5 @@
 // Tests of Curves/Morph2D: making two paths alike, and blending them. Values are worked out by hand in
-// the comments, or taken from graphics_cpp's golden file Curves2D/tests/golden/morph.json.
+// the comments, or taken from graphics_cpp's golden file graphics_cpp tests/golden/morph.json.
 #include <vector>
 
 #include "../Curves/Morph2D.h"

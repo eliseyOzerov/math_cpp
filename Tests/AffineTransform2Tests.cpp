@@ -1,6 +1,6 @@
 // Tests of AffineTransform2 (Linear/AffineTransform2.cpp) and of the plane helpers added with it:
 // Angle::halfTurn, Angle::direction, Vector2::fromAngle / rotated / mean / toMetric / fromMetric and
-// smoothStep. Hand-worked values, plus a few transcribed from graphics_cpp Curves2D/tests/golden/geometry.json.
+// smoothStep. Hand-worked values, plus a few transcribed from graphics_cpp tests/golden/geometry.json.
 #include <cmath>
 #include <vector>
 

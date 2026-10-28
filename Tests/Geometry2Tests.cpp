@@ -1,6 +1,6 @@
 // Tests of the plane geometry added with the 2D curves port: Segment2::closestFoot / isNear / stitchedLoop,
 // Line2::meets, Polyline2, Bounds2::overlaps / centre. Golden cases are from graphics_cpp
-// Curves2D/tests/golden/geometry.json.
+// graphics_cpp tests/golden/geometry.json.
 #include <vector>
 
 #include "../Geometry/Bounds2.h"

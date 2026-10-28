@@ -1,5 +1,5 @@
 // Tests of Curves/InkOutline: the outline of an inked stroke, its plan and the plan's key. Values marked "golden" are
-// transcribed from graphics_cpp's Curves2D/tests/golden/outline.json (double precision; the case number is given).
+// transcribed from graphics_cpp's tests/golden/outline.json (double precision; the case number is given).
 // Plan keys and piece counts are not compared with the goldens where they come from bisections.
 #include <algorithm>
 #include <cmath>
