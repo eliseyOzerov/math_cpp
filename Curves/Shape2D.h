@@ -19,6 +19,17 @@ namespace editor {
 /// Node: planned (fillShape)
 enum class FillRule { evenOdd, nonzero };
 
+/// Whether a point the outlines wind round `windingNumber` times is filled under `fillRule`:
+/// nonzero fills any winding but 0, even-odd fills odd windings (−1 and 3 alike).
+///
+/// Use when: turning a winding number into inside or outside; filling the region between two
+///   edges of a scanline
+/// Tags: fill rule test, inside, winding to coverage, even-odd parity, nonzero
+/// Node: none (inside test under fills and rasterizing)
+inline bool isFilled(int windingNumber, FillRule fillRule) {
+    return fillRule == FillRule::nonzero ? windingNumber != 0 : (windingNumber % 2) != 0;
+}
+
 /// A region of the plane bounded by closed paths: outlines and the holes in them, filled by
 /// `fillRule`. An open path in `outlines` is read as closed by a straight line, as a fill reads it.
 ///

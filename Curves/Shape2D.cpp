@@ -47,8 +47,7 @@ int Shape2D::windingNumber(Vector2 point) const {
 /// Tags: point in shape, inside test, hit test, fill rule, contains
 /// Node: planned (shapeContains)
 bool Shape2D::contains(Vector2 point) const {
-    int winding = windingNumber(point);
-    return fillRule == FillRule::nonzero ? winding != 0 : (winding % 2) != 0;
+    return isFilled(windingNumber(point), fillRule);
 }
 
 /// The smallest rectangle holding every outline. Throws a `MathProblem` for a shape with no outlines.
