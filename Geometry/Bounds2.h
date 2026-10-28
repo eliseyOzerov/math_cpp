@@ -59,6 +59,25 @@ struct Bounds2 {
     /// Tags: point in rectangle, inside box 2D, hit test, contains point
     /// Node: none (2D outline bounds; boundingBox measures 3D geometry)
     bool contains(Vector2 point) const;
+
+    /// Whether this rectangle and `other` overlap, or come within `margin` of each other (a touching
+    /// edge counts). `margin` defaults to 0.
+    ///
+    /// How: on both axes, minimum ≤ other.maximum + margin and other.minimum ≤ maximum + margin.
+    ///
+    /// Source: graphics_cpp curves/geometry `overlaps`.
+    ///
+    /// Use when: skipping curve pairs whose boxes are apart; a cheap test before intersecting
+    /// Tags: overlap, intersects, box intersection, AABB overlap 2D, rect intersects
+    /// Node: none (2D outline bounds)
+    bool overlaps(const Bounds2& other, float margin = 0) const;
+
+    /// The middle of the rectangle: (minimum + maximum) / 2.
+    ///
+    /// Use when: pivoting a turn or a scale about a shape's middle; centring a view
+    /// Tags: centre, center, midpoint of box, rectangle middle, pivot
+    /// Node: none (2D outline bounds)
+    Vector2 centre() const { return Vector2::linearBlend(minimum, maximum, 0.5f); }
 };
 
 } // namespace editor

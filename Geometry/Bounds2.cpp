@@ -32,4 +32,9 @@ bool Bounds2::contains(Vector2 point) const {
     return point.x >= minimum.x && point.x <= maximum.x && point.y >= minimum.y && point.y <= maximum.y;
 }
 
+bool Bounds2::overlaps(const Bounds2& other, float margin) const {
+    return minimum.x <= other.maximum.x + margin && other.minimum.x <= maximum.x + margin
+        && minimum.y <= other.maximum.y + margin && other.minimum.y <= maximum.y + margin;
+}
+
 } // namespace editor

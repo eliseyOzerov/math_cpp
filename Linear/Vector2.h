@@ -3,8 +3,13 @@
 
 #include <cmath>
 #include <optional>
+#include <vector>
+
+#include "MathProblem.h"
 
 namespace editor {
+
+struct Angle;
 
 /// Two numbers, x and y, for a point, a direction or a size on a plane.
 ///
@@ -184,6 +189,56 @@ struct Vector2 {
     static constexpr Vector2 cellCentre(int column, int row, Vector2 lowerCorner, Vector2 cellSize) {
         return lowerCorner + Vector2(static_cast<float>(column) + 0.5f, static_cast<float>(row) + 0.5f) * cellSize;
     }
+
+    /// The point `angle` counterclockwise from the x axis on the unit circle: (cos, sin).
+    /// Defined in Angle.h, which knows `Angle`.
+    ///
+    /// Use when: a direction given as a heading; stepping along a bearing
+    /// Tags: from angle, unit vector at angle, polar to cartesian, direction from angle, heading
+    /// Node: planned (directionFromAngle)
+    static Vector2 fromAngle(Angle angle);
+
+    /// This vector turned by `angle` counterclockwise about `pivot` (the origin by default).
+    /// Defined in Angle.h.
+    ///
+    /// How: with d = this − pivot, the result is pivot + (d.x·cos − d.y·sin, d.x·sin + d.y·cos).
+    /// y up; a quarter turn takes (1, 0) to (0, 1).
+    ///
+    /// Use when: turning a handle or an offset about a point
+    /// Tags: rotate 2D, rotate about pivot, rotated, turn vector, Vector2.Rotate
+    /// Node: planned (rotatePoint)
+    Vector2 rotated(Angle angle, Vector2 pivot) const;
+
+    /// This vector turned by `angle` counterclockwise about the origin. Defined in Angle.h.
+    Vector2 rotated(Angle angle) const;
+
+    /// The average of `points`: the sum divided by the count. Throws a `MathProblem` for none.
+    ///
+    /// Use when: finding the middle of a set of nodes; the pivot for turning a selection
+    /// Tags: mean, average, centroid of points, midpoint of set, centre of mass
+    /// Node: planned (meanPoint)
+    static Vector2 mean(const std::vector<Vector2>& points) {
+        if (points.empty()) throw MathProblem("The mean of no points is undefined.");
+        Vector2 sum;
+        for (Vector2 point : points) sum = sum + point;
+        return sum / static_cast<float>(points.size());
+    }
+
+    /// This point in the units of `metric` (what one unit across and one unit up are worth):
+    /// (x·metric.x, y·metric.y). `fromMetric` undoes it.
+    ///
+    /// Use when: measuring on a plane whose axes are not equally scaled (a stretched drawing)
+    /// Tags: metric, anisotropic units, aspect scaling, to metric, non-uniform scale
+    /// Node: none (unit conversion)
+    constexpr Vector2 toMetric(Vector2 metric) const { return Vector2(x * metric.x, y * metric.y); }
+
+    /// The plain coordinates of this point given in the units of `metric`: (x/metric.x, y/metric.y).
+    /// A zero metric component gives an infinity or NaN, as division does.
+    ///
+    /// Use when: bringing a result measured in metric units back to the drawing's coordinates
+    /// Tags: from metric, anisotropic units, inverse aspect scaling
+    /// Node: none (unit conversion)
+    constexpr Vector2 fromMetric(Vector2 metric) const { return Vector2(x / metric.x, y / metric.y); }
 };
 
 /// `vector` scaled by `scale` on both axes.

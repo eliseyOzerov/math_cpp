@@ -10,8 +10,10 @@
 // extension (offset, fitting, crossings) adds its declaration in the section for its file.
 #pragma once
 
+#include <array>
 #include <concepts>
 #include <optional>
+#include <string_view>
 #include <vector>
 
 #include "../Linear/Angle.h"
@@ -19,6 +21,7 @@
 #include "../Linear/Vector2.h"
 #include "../Linear/Vector3.h"
 #include "Curve.h"
+#include "PathPoint2.h"
 
 namespace editor {
 
@@ -113,6 +116,64 @@ struct SelfCrossingParameters {
 /// Use when: drawing a smooth curve with handles, like a pen tool or a road bend
 /// Tags: Bezier, cubic Bezier, curve, spline, control points, handles, path
 /// Node: curveBezier
+/// Which coordinate of a flat point: the horizontal `x` or the vertical `y`.
+///
+/// Use when: asking where a curve reaches a given x or a given y
+/// Tags: axis, coordinate, x or y, horizontal vertical
+/// Node: none (value type)
+enum class CurveAxis { x, y };
+
+/// The kind of a cubic Bézier by its shape: a straight line, an arch with no inflection, one
+/// inflection, two inflections, a loop, or a cusp (Stone and DeRose, 1989).
+///
+/// Use when: telling whether a curve loops or has a cusp before offsetting or fitting it
+/// Tags: cubic classification, Stone DeRose, loop, cusp, inflection count, curve type
+/// Node: planned (classifyCurve)
+enum class CubicShapeKind { line, arch, singleInflection, doubleInflection, loop, cusp };
+
+/// The kind's name as a short phrase ("line", "arch", "single inflection"...).
+std::string_view cubicShapeKindName(CubicShapeKind kind);
+
+/// The shape class of a cubic, and where its canonical form puts the fourth point.
+///
+/// Use when: reading the class of a cubic together with its place on the Stone-DeRose chart
+/// Tags: canonical form, cubic class, Stone DeRose chart, loop cusp diagram
+/// Node: planned (classifyCurve)
+struct CanonicalForm {
+    CubicShapeKind kind = CubicShapeKind::line;
+    /// Where the map taking the first three points to (0, 0), (0, 1), (1, 1) puts the fourth;
+    /// nothing when the first three lie on a line (no such map exists).
+    std::optional<Vector2> fourthPoint;
+};
+
+/// The circle that fits a curve best at one parameter.
+///
+/// Use when: rounding a corner to match a curve's bend; reading how tight a curve turns
+/// Tags: osculating circle, curvature circle, radius of curvature, centre of curvature
+/// Node: planned (osculatingCircle)
+struct OsculatingCircle {
+    /// The centre, on the side the curve bends to; nothing where the curve runs straight.
+    std::optional<Vector2> centre;
+    /// The radius; infinity where the curve runs straight.
+    float radius = 0;
+    /// The signed curvature, one over the radius: positive turning counter-clockwise, 0 if straight.
+    float curvature = 0;
+};
+
+/// The options of `CubicBezier::cubicThrough`; anything left empty takes its default.
+///
+/// Use when: shaping a curve through a point with control over how it passes
+/// Tags: curve through point options, strut length, direction at point
+/// Node: planned (curveThrough)
+struct ThroughOptions {
+    /// The parameter at which the curve passes the point (default: by distance from the ends).
+    std::optional<float> parameter;
+    /// The length of the de Casteljau strut behind the point.
+    std::optional<float> strutLength;
+    /// The direction of travel at the point (default: parallel to start to end).
+    std::optional<Vector2> direction;
+};
+
 template <CurvePoint PointType>
 class CubicBezier : public Curve<CubicBezier<PointType>, PointType> {
 public:
@@ -253,6 +314,65 @@ public:
     Vector2 endDirection() const requires std::same_as<Point, Vector2>;
     CubicBezier<Vector2> translated(Vector2 offset) const requires std::same_as<Point, Vector2>;
     CubicBezier<Vector2> portion(float lower, float upper) const requires std::same_as<Point, Vector2>;
+
+    // MARK: Frame and shape (CubicBezier+Frame.cpp, flat curves only)
+
+    static std::vector<float> coordinateRoots(float startValue, float startHandleValue, float endHandleValue,
+                                              float endValue, float value = 0)
+        requires std::same_as<Point, Vector2>;
+    std::vector<float> parametersAtCoordinate(CurveAxis axis, float value) const requires std::same_as<Point, Vector2>;
+    CubicBezier<Vector2> alignedTo(Vector2 lineStart, Vector2 lineEnd) const requires std::same_as<Point, Vector2>;
+    CubicBezier<Vector2> alignedToChord() const requires std::same_as<Point, Vector2>;
+    std::array<Vector2, 4> tightBox() const requires std::same_as<Point, Vector2>;
+    bool isStraight() const requires std::same_as<Point, Vector2>;
+    CanonicalForm canonicalForm(float tolerance = 1e-6f) const requires std::same_as<Point, Vector2>;
+
+    /// The same curve run backwards: end first, handles swapped.
+    ///
+    /// How: (P0, P1, P2, P3) becomes (P3, P2, P1, P0); the point at parameter t becomes the
+    /// point at 1 − t. Works for any point type.
+    ///
+    /// Use when: flipping the direction of a path piece; matching the direction of two pieces
+    /// Tags: reverse curve, flip direction, backwards Bezier, reversed
+    /// Node: planned (reversePath)
+    CubicBezier<Point> reversed() const { return CubicBezier<Point>(end, endHandle, startHandle, start); }
+
+    // MARK: Sampling and circles (CubicBezier+Sampling.cpp, flat curves only)
+
+    std::array<Vector2, 10> deCasteljauPoints(float parameter) const requires std::same_as<Point, Vector2>;
+    std::vector<Vector2> lookupTable(int steps = 100) const requires std::same_as<Point, Vector2>;
+    Vector2 tangentDirection(float parameter) const requires std::same_as<Point, Vector2>;
+    Vector2 unitNormal(float parameter) const requires std::same_as<Point, Vector2>;
+    OsculatingCircle osculatingCircle(float parameter) const requires std::same_as<Point, Vector2>;
+    std::vector<CubicBezier<Vector2>> cutAtLengthShares(
+        const std::vector<float>& shares, Vector2 metric = Vector2(1, 1)) const requires std::same_as<Point, Vector2>;
+    std::vector<CubicBezier<Vector2>> splitIntoEqualLengths(int count) const requires std::same_as<Point, Vector2>;
+    std::vector<CubicBezier<Vector2>> splitAtEvenParameters(int count) const requires std::same_as<Point, Vector2>;
+
+    // MARK: Projection (CubicBezier+Projection.cpp, flat curves only)
+
+    static constexpr int projectionSamples = 32;
+
+    PathPoint2 nearestPoint(Vector2 target, int samples = 64) const requires std::same_as<Point, Vector2>;
+    static PathPoint2 nearest(const std::vector<CubicBezier<Vector2>>& curves, Vector2 target,
+                              int samples = projectionSamples) requires std::same_as<Point, Vector2>;
+
+    // MARK: Through points (CubicBezier+Through.cpp, flat curves only)
+
+    static CubicBezier<Vector2> quadraticThrough(
+        Vector2 start, Vector2 through, Vector2 end, std::optional<float> parameter = std::nullopt)
+        requires std::same_as<Point, Vector2>;
+    static CubicBezier<Vector2> cubicThrough(
+        Vector2 start, Vector2 through, Vector2 end, const ThroughOptions& options = ThroughOptions())
+        requires std::same_as<Point, Vector2>;
+    CubicBezier<Vector2> molded(float parameter, Vector2 destination) const requires std::same_as<Point, Vector2>;
+
+    // MARK: Arcs from end points (CubicBezier+ArcFromEnds.cpp, flat curves only)
+
+    static CubicBezier<Vector2> arcCubic(Vector2 start, Vector2 startDirection, Vector2 end, Vector2 endDirection)
+        requires std::same_as<Point, Vector2>;
+    static std::vector<CubicBezier<Vector2>> arcBetween(Vector2 start, Vector2 end, Angle chordAngle)
+        requires std::same_as<Point, Vector2>;
 
     // MARK: Flattening (CubicBezier+Flattening.cpp, flat curves only)
 

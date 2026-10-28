@@ -84,4 +84,28 @@ inline float clamped(float value, float lower, float upper) { return kernels::cl
 /// Node: blend
 inline float linearBlend(float start, float end, float amount) { return kernels::linearBlend(start, end, amount); }
 
+/// The smooth step from 0 at `amount` = 0 to 1 at `amount` = 1: level (zero slope) at both ends,
+/// and held at 0 below and 1 above.
+///
+/// How: u²(3 − 2u) with u = `amount` held in 0…1 (the cubic Hermite blend, as in GLSL's
+/// `smoothstep` with edges 0 and 1). Halfway it is 0.5, and smoothStep(1 − u) = 1 − smoothStep(u).
+///
+///     1 │          ╭───
+///       │        ╱
+///       │      ╱        S-shaped, flat at both ends
+///     0 │───╯
+///       └──────────── amount 0…1
+///
+/// A NaN `amount` stays NaN. Source: Hermite interpolation, graphics_cpp curves/profile.
+///
+/// Use when: easing a value in and out; a falloff or a profile that must leave and meet its
+///   levels smoothly
+/// Tags: smoothstep, smooth step, hermite, ease in out, S curve, cubic ease, GLSL smoothstep
+/// Node: planned (smoothStep)
+inline float smoothStep(float amount) {
+    if (amount <= 0) return 0;
+    if (amount >= 1) return 1;
+    return amount * amount * (3 - 2 * amount);
+}
+
 } // namespace editor

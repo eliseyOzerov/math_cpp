@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 #include <optional>
 
 #include "Scalar.h"
@@ -205,6 +206,43 @@ struct Angle {
     /// Node: none (value type)
     constexpr Angle operator/(float divisor) const { return Angle{radians / divisor}; }
 
+    // MARK: Direction
+
+    /// This angle folded into (−90°, 90°]: a direction without caring which way along its line it
+    /// runs. Whole half turns (180°) are added or taken away.
+    ///
+    /// How: result = angle − n·π with n = ceil(angle/π − ½). The range is open at −90° and
+    /// closed at 90°: exactly −90° becomes 90°. A NaN or infinite angle is returned unchanged.
+    ///
+    ///           90° (kept)
+    ///            │
+    ///     ───────●─────── 0°   190° → 10°, −100° → 80°, 90° → 90°, −90° → 90°
+    ///
+    /// Source: graphics_cpp curves/geometry `halfTurn`.
+    ///
+    /// Use when: comparing the slopes of lines whatever way they are drawn; the angle of a line
+    ///   as opposed to a ray
+    /// Tags: half turn, fold angle, line direction, modulo pi, undirected angle, wrap angle
+    /// Node: planned (foldAngle)
+    Angle halfTurn() const {
+        if (!std::isfinite(radians)) return *this;
+        constexpr float quarter = pi / 2;
+        float folded = radians - std::ceil(radians / pi - 0.5f) * pi;
+        // A quarter turn computed from degrees can differ from `quarter` by a few rounding steps either
+        // way; that much counts as exactly 90°, so 90° stays 90° and -90° becomes 90°.
+        float rounding = 4 * std::numeric_limits<float>::epsilon() * quarter;
+        if (folded > quarter + rounding) folded -= pi;
+        if (folded <= -quarter + rounding) folded += pi;
+        return Angle{folded};
+    }
+
+    /// The unit vector at this angle counterclockwise from the x axis: (cos, sin).
+    ///
+    /// Use when: turning a heading into a direction
+    /// Tags: unit vector, direction from angle, polar, heading vector
+    /// Node: planned (directionFromAngle)
+    Vector2 direction() const { return Vector2(cosine(), sine()); }
+
     /// π as Swift's `Float.pi` holds it: rounded toward zero (0x1.921fb4p1), one step below the
     /// nearest float, so the two engines convert degrees and measure circles identically. Every
     /// file of the core uses this one, never a π of its own.
@@ -213,5 +251,16 @@ struct Angle {
 private:
     static constexpr float radiansPerDegree = pi / 180;
 };
+
+inline Vector2 Vector2::fromAngle(Angle angle) { return angle.direction(); }
+
+inline Vector2 Vector2::rotated(Angle angle, Vector2 pivot) const {
+    Vector2 offset = *this - pivot;
+    float cosine = angle.cosine();
+    float sine = angle.sine();
+    return pivot + Vector2(offset.x * cosine - offset.y * sine, offset.x * sine + offset.y * cosine);
+}
+
+inline Vector2 Vector2::rotated(Angle angle) const { return rotated(angle, Vector2(0, 0)); }
 
 } // namespace editor

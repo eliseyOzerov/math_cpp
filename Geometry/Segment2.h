@@ -1,9 +1,20 @@
 // A straight piece of line in the plane (Engine/Math/Primitives/Segment2.swift).
 #pragma once
 
+#include <optional>
+#include <vector>
+
 #include "../Linear/Vector2.h"
 
 namespace editor {
+
+/// The nearest point of a segment to some point, and how far along the segment it lies.
+struct SegmentFoot {
+    /// The point on the segment.
+    Vector2 point;
+    /// 0 at the segment's start, 1 at its end.
+    float parameter = 0;
+};
 
 /// The straight line between `start` and `end` in the plane, end points included: the 2D twin of
 /// `Segment`.
@@ -38,6 +49,46 @@ struct Segment2 {
     /// Tags: distance to segment 2D, point segment distance, sdSegment, udSegment
     /// Node: inside extrudedOutlineField
     float distance(Vector2 point) const;
+
+    /// The point on the segment nearest to `point`, with how far along the segment it lies.
+    ///
+    /// How: parameter = (point − start)·direction / direction·direction held in 0…1, nearest =
+    /// start + direction × parameter (see `closestPoint`). parameter 0 is `start`, 1 is `end`.
+    /// Edge case: if start == end the parameter is 0.
+    ///
+    /// Use when: snapping a point onto a side and knowing where on the side it landed
+    /// Tags: nearest point with parameter, project onto segment, foot of perpendicular, t value
+    /// Node: planned (closestPoint)
+    SegmentFoot closestFoot(Vector2 point) const;
+
+    /// Whether `point` lies within `tolerance` of the line through the segment, and at most
+    /// `overshoot` (default `tolerance`) beyond either end.
+    ///
+    /// How: with direction = end − start and length L, the sideways distance is
+    /// |(point − start) × direction| / L, and the distances along the line are
+    /// (point − start)·direction / L (at least −overshoot) and (point − end)·direction / L (at most
+    /// overshoot). A segment shorter than 1e-9 has no line and nothing is near it.
+    ///
+    ///        overshoot  ┌─────────── tolerance band ───────────┐  overshoot
+    ///               ····start ───────────────────────────── end····
+    ///
+    /// Source: graphics_cpp curves/geometry `nearSegment`.
+    ///
+    /// Use when: deciding whether a click is on a side of an outline, with a margin
+    /// Tags: near segment, hit test, point on line within tolerance, pick segment, snap
+    /// Node: none (hit test)
+    bool isNear(Vector2 point, float tolerance, std::optional<float> overshoot = std::nullopt) const;
+
+    /// `segments` with each segment's start moved onto the end of the one before it, round the
+    /// loop: the first starts where the last ends. Closes the small gaps that rounding leaves in a
+    /// closed outline. An empty list stays empty.
+    ///
+    /// Source: graphics_cpp curves/geometry `stitch`.
+    ///
+    /// Use when: sides of a closed outline were computed separately and must meet exactly
+    /// Tags: stitch, close gaps, snap ends together, join segments, weld loop
+    /// Node: planned (closeOutline)
+    static std::vector<Segment2> stitchedLoop(const std::vector<Segment2>& segments);
 };
 
 } // namespace editor
