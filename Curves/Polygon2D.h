@@ -10,6 +10,7 @@
 
 #include "../Linear/Angle.h"
 #include "../Geometry/Bounds2.h"
+#include "../Geometry/HalfPlane2.h"
 #include "../Geometry/Segment2.h"
 #include "../Linear/Vector2.h"
 
@@ -62,6 +63,9 @@ public:
 
     /// The area enclosed, positive when counterclockwise (Polygon2D+Triangulation.cpp).
     float signedArea() const;
+
+    /// The part of the polygon on the kept side of `halfPlane` (Polygon2D+Clipping.cpp).
+    std::optional<Polygon2D> clippedBy(const HalfPlane2& halfPlane) const;
 
 private:
     std::vector<Vector2> cornerList;

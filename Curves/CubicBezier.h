@@ -12,6 +12,8 @@
 
 #include <array>
 #include <concepts>
+#include <functional>
+#include <limits>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -27,6 +29,17 @@ namespace editor {
 
 template <CurvePoint Point>
 class CubicBezier;
+
+struct FittedCubic;
+struct CircularArcPiece;
+
+/// How far to move a curve sideways at each parameter, positive to the left of the direction of
+/// travel and negative to the right: a function of the parameter 0…1 along the curve.
+///
+/// Use when: offsetting a curve by a distance that grows, tapers or swells along it
+/// Tags: offset reach, graduated offset, variable width, distance function
+/// Node: planned (offsetProfile)
+using OffsetReach = std::function<float(float)>;
 
 /// The two halves a Bézier curve is cut into by `CubicBezier.split(at:)`.
 ///
@@ -507,6 +520,11 @@ public:
         requires std::same_as<Point, Vector2>;
     static std::vector<Vector2> withoutDuplicates(const std::vector<Vector2>& points)
         requires std::same_as<Point, Vector2>;
+    static FittedCubic fittedSinglePiece(const std::vector<Vector2>& points, Vector2 startDirection, Vector2 endDirection)
+        requires std::same_as<Point, Vector2>;
+    static std::vector<CubicBezier<Vector2>> fittedWithCorners(
+        const std::vector<Vector2>& points, float tolerance, Angle cornerAngle = Angle::degrees(60))
+        requires std::same_as<Point, Vector2>;
 
     // MARK: Offset (CubicBezier+Offset.cpp, flat curves only)
 
@@ -554,6 +572,12 @@ public:
         requires std::same_as<Point, Vector2>;
     std::optional<Vector2> offsetDerivative(float parameter, float startDistance, float endDistance) const
         requires std::same_as<Point, Vector2>;
+    Vector2 pointOffsetBy(float parameter, float distance) const requires std::same_as<Point, Vector2>;
+    CubicBezier<Vector2> scaledOut(float distance) const requires std::same_as<Point, Vector2>;
+    CubicBezier<Vector2> scaledOut(const OffsetReach& reach) const requires std::same_as<Point, Vector2>;
+    std::vector<CubicBezier<Vector2>> offsetByReach(const OffsetReach& reach) const
+        requires std::same_as<Point, Vector2>;
+    std::vector<CircularArcPiece> circularArcs(float threshold = 0.5f) const requires std::same_as<Point, Vector2>;
     float largestOffsetError(
         const CubicBezier<Vector2>& offsetPiece, ParameterRange range, float startDistance, float endDistance) const
         requires std::same_as<Point, Vector2>;
@@ -593,6 +617,42 @@ private:
             firstBlendStart, firstBlendEnd, secondBlendStart, secondBlendEnd,
             Point::linearBlend(secondBlendStart, secondBlendEnd, parameter)};
     }
+};
+
+/// One cubic fitted through points, and the furthest any point lies from it.
+///
+/// Use when: fitting one smooth piece and deciding whether it is good enough
+/// Tags: fit result, fitted cubic, fit error, single piece fit
+/// Node: planned (fitCubicPiece)
+struct FittedCubic {
+    CubicBezier<Vector2> cubic;
+    /// The largest distance from a fitted point to the curve (after Newton steps towards its
+    /// nearest place on it).
+    float largestError = 0;
+};
+
+/// A circular arc that stays near part of a curve (`CubicBezier::circularArcs`).
+///
+/// Use when: turning a curve into arcs for a machine path, a road or a dashed border
+/// Tags: arc fit, biarc, circular arc piece, radius, sweep
+/// Node: planned (circularArcs)
+struct CircularArcPiece {
+    /// The circle's centre, or nothing where the part is straight (then the radius is infinite).
+    std::optional<Vector2> centre;
+    /// The circle's radius; infinity for a straight part.
+    float radius = std::numeric_limits<float>::infinity();
+    /// The angle of the arc's start and end seen from the centre (counterclockwise from +x);
+    /// 0 for a straight part.
+    Angle startAngle;
+    Angle endAngle;
+    /// Whether the arc runs counterclockwise from its start to its end.
+    bool isCounterclockwise = true;
+    /// The arc's end points, on the curve.
+    Vector2 from;
+    Vector2 to;
+    /// The curve parameters of `from` and `to`.
+    float startParameter = 0;
+    float endParameter = 0;
 };
 
 } // namespace editor

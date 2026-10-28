@@ -318,4 +318,135 @@ float Path2D::Edge::length() const {
     return start.distance(segment.endPoint);
 }
 
+namespace {
+
+/// One simple piece of a spine with the lengths along the whole spine where it starts and ends.
+struct MeasuredPiece {
+    CubicBezier<Vector2> curve;
+    float startLength = 0;
+    float endLength = 0;
+};
+
+/// The simple pieces of `spine` with the length where each starts and ends.
+std::vector<MeasuredPiece> measuredSimplePieces(const CubicBezier<Vector2>& spine) {
+    std::vector<MeasuredPiece> pieces;
+    float run = 0;
+    for (const CubicBezier<Vector2>& curve : spine.simplePiecesForOffset()) {
+        float length = curve.totalLength();
+        pieces.push_back(MeasuredPiece{curve, run, run + length});
+        run += length;
+    }
+    return pieces;
+}
+
+/// The two sides of the outline of a piece: the left side forwards and the right side backwards
+/// (each reversed to run from the piece's end to its start), with the distances tapering
+/// linearly by length from `leftStart`/`rightStart` at the spine's start to `leftEnd`/`rightEnd`
+/// at its end.
+struct PieceSides {
+    CubicBezier<Vector2> left;
+    CubicBezier<Vector2> rightBackwards;
+};
+
+PieceSides sidesOf(
+    const MeasuredPiece& piece, float totalLength, float leftStart, float leftEnd, float rightStart, float rightEnd) {
+    auto taper = [&](float from, float to) {
+        return [=, &piece](float parameter) {
+            float length = piece.startLength + (piece.endLength - piece.startLength) * parameter;
+            return from + (to - from) * length / totalLength;
+        };
+    };
+    // A positive reach is to the right of travel, so the left side has a negative reach.
+    OffsetReach leftReach = [leftTaper = taper(leftStart, leftEnd)](float parameter) { return -leftTaper(parameter); };
+    OffsetReach rightReach = taper(rightStart, rightEnd);
+    return PieceSides{piece.curve.scaledOut(leftReach), piece.curve.scaledOut(rightReach).reversed()};
+}
+
+} // namespace
+
+/// A closed outline round a curve: `leftDistance` out to its left, `rightDistance` out to its
+/// right (default the same), tapering to `leftEndDistance` and `rightEndDistance` at the curve's
+/// end when given (by length along the curve).
+///
+/// How: the curve is cut into simple pieces (`CubicBezier::simplePiecesForOffset`), each side
+/// is the pieces moved out with `CubicBezier::scaledOut(reach)` where the reach changes linearly
+/// with the length along the whole curve. The path runs the left side forwards, a straight cap
+/// across the end, the right side backwards, and a straight cap back to the start.
+///
+///     left side  ╭───────────────╮
+///     start cap │ ●═════════════● │ end cap       the spine is ●═●; caps are straight
+///     right side ╰───────────────╯
+///
+/// Conventions: y-up plane; the path runs the left side forwards, so a spine running left to right
+/// gives a clockwise outline. Distances
+/// are widths on that side, not signed offsets; a negative one pulls that side across the spine.
+/// The sides are Bezier.js's handle-scaling fits, with no tolerance (see `CubicBezier::offsetByReach`).
+/// Throws a `MathProblem` for a non-finite curve or distance.
+///
+/// Source: graphics_cpp curves/offset `outline` (Bezier.js `outline`).
+///
+/// Use when: drawing a thick, tapering stroke from a centre line (a leaf vein, a brush stroke, a road)
+/// Tags: outline, stroke outline, variable width stroke, both sides, caps, Bezier.js outline
+/// Node: planned (strokeOutline)
+Path2D Path2D::strokeOutline(
+    const CubicBezier<Vector2>& spine, float leftDistance, std::optional<float> rightDistance,
+    std::optional<float> leftEndDistance, std::optional<float> rightEndDistance) {
+    if (!spine.hasFiniteControlPoints() || !std::isfinite(leftDistance)) {
+        throw MathProblem("An outline needs a curve with finite control points and a finite distance.");
+    }
+    float rightStart = rightDistance.value_or(leftDistance);
+    float leftEnd = leftEndDistance.value_or(leftDistance);
+    float rightEnd = rightEndDistance.value_or(rightStart);
+    std::vector<MeasuredPiece> pieces = measuredSimplePieces(spine);
+    float total = pieces.back().endLength > 0 ? pieces.back().endLength : 1;
+    std::vector<CubicBezier<Vector2>> left;
+    std::vector<CubicBezier<Vector2>> rightBackwards;
+    for (const MeasuredPiece& piece : pieces) {
+        PieceSides sides = sidesOf(piece, total, leftDistance, leftEnd, rightStart, rightEnd);
+        left.push_back(sides.left);
+        rightBackwards.insert(rightBackwards.begin(), sides.rightBackwards);
+    }
+    Path2D outline(left.front().start);
+    for (const CubicBezier<Vector2>& piece : left) outline.addCubic(piece.startHandle, piece.endHandle, piece.end);
+    outline.addLine(rightBackwards.front().start);
+    for (const CubicBezier<Vector2>& piece : rightBackwards) outline.addCubic(piece.startHandle, piece.endHandle, piece.end);
+    outline.close();
+    return outline;
+}
+
+/// The outline of a curve (`strokeOutline`) as one closed path per simple piece: each its left
+/// side, an end, its right side backwards and a start.
+///
+/// Conventions: the same distances and taper as `strokeOutline`, measured along the whole curve,
+/// so the pieces join without a step. The paths are separate and may overlap at their caps.
+///
+/// Source: graphics_cpp curves/offset `outlineShapes`.
+///
+/// Use when: filling a variable-width stroke piece by piece, or colouring each piece differently
+/// Tags: outline shapes, stroke pieces, outline per segment, tapered stroke polygons
+/// Node: planned (strokeOutline)
+std::vector<Path2D> Path2D::strokeOutlinePieces(
+    const CubicBezier<Vector2>& spine, float leftDistance, std::optional<float> rightDistance,
+    std::optional<float> leftEndDistance, std::optional<float> rightEndDistance) {
+    if (!spine.hasFiniteControlPoints() || !std::isfinite(leftDistance)) {
+        throw MathProblem("An outline needs a curve with finite control points and a finite distance.");
+    }
+    float rightStart = rightDistance.value_or(leftDistance);
+    float leftEnd = leftEndDistance.value_or(leftDistance);
+    float rightEnd = rightEndDistance.value_or(rightStart);
+    std::vector<MeasuredPiece> pieces = measuredSimplePieces(spine);
+    float total = pieces.back().endLength > 0 ? pieces.back().endLength : 1;
+    std::vector<Path2D> shapes;
+    for (const MeasuredPiece& piece : pieces) {
+        PieceSides sides = sidesOf(piece, total, leftDistance, leftEnd, rightStart, rightEnd);
+        Path2D shape(sides.left.start);
+        shape.addCubic(sides.left.startHandle, sides.left.endHandle, sides.left.end);
+        shape.addLine(sides.rightBackwards.start);
+        shape.addCubic(sides.rightBackwards.startHandle, sides.rightBackwards.endHandle, sides.rightBackwards.end);
+        shape.close();
+        shapes.push_back(shape);
+    }
+    return shapes;
+}
+
 } // namespace editor

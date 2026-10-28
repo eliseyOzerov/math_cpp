@@ -215,6 +215,12 @@ public:
 
     std::optional<Path2D> offset(float distance, OffsetJoin join, float tolerance) const;
     std::optional<Path2D> offset(float startDistance, float endDistance, OffsetJoin join, float tolerance) const;
+    static Path2D strokeOutline(
+        const CubicBezier<Vector2>& spine, float leftDistance, std::optional<float> rightDistance = std::nullopt,
+        std::optional<float> leftEndDistance = std::nullopt, std::optional<float> rightEndDistance = std::nullopt);
+    static std::vector<Path2D> strokeOutlinePieces(
+        const CubicBezier<Vector2>& spine, float leftDistance, std::optional<float> rightDistance = std::nullopt,
+        std::optional<float> leftEndDistance = std::nullopt, std::optional<float> rightEndDistance = std::nullopt);
     void append(const Segment& segment);
 
     // MARK: Corners (Path2D+Corners.cpp)

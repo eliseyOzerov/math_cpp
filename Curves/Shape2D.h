@@ -40,6 +40,26 @@ struct Shape2D {
     FillRule fillRule = FillRule::nonzero;
 
     bool operator==(const Shape2D&) const = default;
+
+    // MARK: Measurements (Shape2D.cpp)
+
+    float signedArea() const;
+    int windingNumber(Vector2 point) const;
+    bool contains(Vector2 point) const;
+    Bounds2 bounds() const;
+    Shape2D reversed() const;
+    Shape2D orientedForFill() const;
 };
+
+/// `path` run backwards: the same pieces in the opposite order, each reversed, closed if the
+/// path was. A closed path with its pen away from the start keeps its implicit closing line,
+/// which becomes the first piece of the reversed path.
+///
+/// Conventions: y-up plane; the signed area changes sign.
+///
+/// Use when: turning a hole round to the other direction; making outlines run the same way
+/// Tags: reverse path, reverse contour, flip direction, winding order
+/// Node: planned (reversePath)
+Path2D reversedPath(const Path2D& path);
 
 } // namespace editor
