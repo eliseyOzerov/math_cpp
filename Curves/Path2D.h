@@ -95,7 +95,7 @@ struct PathArc {
 ///   design tool that marks its nodes
 /// Tags: node type, corner node, smooth node, symmetric node, cusp, tangent continuity, G1, C1
 /// Node: planned (setNodeKind)
-enum class NodeKind { corner, smooth, symmetric };
+enum class PathNodeKind { corner, smooth, symmetric };
 
 /// Which way a quarter of an ellipse leaves its start: along the horizontal or along the
 /// vertical. It arrives along the other.
@@ -209,7 +209,7 @@ public:
     /// Use when: deciding whether moving one handle should move its partner
     /// Tags: node kind, node type, smooth or corner
     /// Node: planned (setNodeKind)
-    std::optional<NodeKind> nodeKind(int nodeIndex) const;
+    std::optional<PathNodeKind> nodeKind(int nodeIndex) const;
 
     /// Marks node `nodeIndex` (0 is `start`, then the end of each segment) as `kind`, or clears
     /// the mark with nothing. Throws a `MathProblem` when there is no such node.
@@ -217,7 +217,7 @@ public:
     /// Use when: recording that a node was drawn smooth; reading node types from an SVG editor
     /// Tags: set node kind, mark smooth, mark corner
     /// Node: planned (setNodeKind)
-    void setNodeKind(int nodeIndex, std::optional<NodeKind> kind);
+    void setNodeKind(int nodeIndex, std::optional<PathNodeKind> kind);
 
     // MARK: Building (Path2D.cpp)
 
@@ -238,10 +238,10 @@ public:
 
     // MARK: Node kinds read from handles and handle edits (Path2D+NodeKinds.cpp)
 
-    NodeKind effectiveNodeKind(int nodeIndex, Vector2 metric = Vector2(1, 1)) const;
-    std::vector<NodeKind> effectiveNodeKinds(Vector2 metric = Vector2(1, 1)) const;
-    Path2D withNodeKind(NodeKind kind, const std::vector<int>& nodeIndices, Vector2 metric = Vector2(1, 1)) const;
-    Path2D withNodeKind(NodeKind kind, Vector2 metric = Vector2(1, 1)) const;
+    PathNodeKind effectiveNodeKind(int nodeIndex, Vector2 metric = Vector2(1, 1)) const;
+    std::vector<PathNodeKind> effectiveNodeKinds(Vector2 metric = Vector2(1, 1)) const;
+    Path2D withNodeKind(PathNodeKind kind, const std::vector<int>& nodeIndices, Vector2 metric = Vector2(1, 1)) const;
+    Path2D withNodeKind(PathNodeKind kind, Vector2 metric = Vector2(1, 1)) const;
     Path2D withHandleMoved(int nodeIndex, HandleSide side, Vector2 to, Vector2 metric = Vector2(1, 1)) const;
 
     // MARK: Places by progress (Path2D+Analysis.cpp)
@@ -391,7 +391,7 @@ private:
     std::vector<Segment> segmentList;
     bool closed = false;
     /// One entry per node that was marked, longer only as far as the highest mark.
-    std::vector<std::optional<NodeKind>> nodeKindList;
+    std::vector<std::optional<PathNodeKind>> nodeKindList;
 
     static bool isSamePointUpToRounding(Vector2 first, Vector2 second);
 };

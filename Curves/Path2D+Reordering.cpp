@@ -10,7 +10,7 @@ namespace {
 
 /// The path on `pieces`, closed if asked, with node marks `kinds` (node 0 first).
 Path2D pathOnPieces(
-    Vector2 start, const std::vector<OutlinePiece>& pieces, bool closed, const std::vector<std::optional<NodeKind>>& kinds) {
+    Vector2 start, const std::vector<OutlinePiece>& pieces, bool closed, const std::vector<std::optional<PathNodeKind>>& kinds) {
     Path2D result(start);
     for (const OutlinePiece& piece : pieces) {
         if (piece.isLine) result.addLine(piece.end());
@@ -53,7 +53,7 @@ Path2D Path2D::reversed() const {
     int nodeCount = static_cast<int>(pieces.size());
     for (int node = 0; node <= nodeCount; node += 1) {
         // The closing line, if added, is a piece of its own: its end is node 0 again.
-        if (std::optional<NodeKind> marked = nodeKind(node)) result.setNodeKind(nodeCount - node, marked);
+        if (std::optional<PathNodeKind> marked = nodeKind(node)) result.setNodeKind(nodeCount - node, marked);
     }
     return result;
 }
@@ -78,7 +78,7 @@ Path2D Path2D::startingAtNode(int nodeIndex) const {
     if (count == 0 || nodeIndex < 0 || nodeIndex > count) throw MathProblem("The path has no such node to start at.");
     int first = nodeIndex % count;
     std::vector<OutlinePiece> ordered;
-    std::vector<std::optional<NodeKind>> kinds;
+    std::vector<std::optional<PathNodeKind>> kinds;
     for (int step = 0; step < count; step += 1) {
         const Edge& edge = pieces[static_cast<size_t>((first + step) % count)];
         if (std::optional<CubicBezier<Vector2>> cubic = edge.cubic()) ordered.push_back(OutlinePiece::curve(*cubic));

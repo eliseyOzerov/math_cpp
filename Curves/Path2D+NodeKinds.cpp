@@ -60,7 +60,7 @@ std::optional<Vector2> directionFrom(Vector2 node, const std::array<Vector2, 3>&
 }
 
 /// The path rebuilt on `pieces` with node marks `kinds` (node 0 first).
-Path2D rebuilt(const std::vector<OutlinePiece>& pieces, const Path2D& original, const std::vector<std::optional<NodeKind>>& kinds) {
+Path2D rebuilt(const std::vector<OutlinePiece>& pieces, const Path2D& original, const std::vector<std::optional<PathNodeKind>>& kinds) {
     Path2D result(original.start);
     for (const OutlinePiece& piece : pieces) {
         if (piece.isLine) result.addLine(piece.end());
@@ -71,8 +71,8 @@ Path2D rebuilt(const std::vector<OutlinePiece>& pieces, const Path2D& original, 
     return result;
 }
 
-std::vector<std::optional<NodeKind>> markedKinds(const Path2D& path) {
-    std::vector<std::optional<NodeKind>> kinds;
+std::vector<std::optional<PathNodeKind>> markedKinds(const Path2D& path) {
+    std::vector<std::optional<PathNodeKind>> kinds;
     for (int node = 0; node <= static_cast<int>(path.segments().size()); node += 1) kinds.push_back(path.nodeKind(node));
     return kinds;
 }
@@ -86,9 +86,9 @@ std::vector<std::optional<NodeKind>> markedKinds(const Path2D& path) {
 /// lead's length (the average for both). The handles are placed at N − direction·inLength and
 /// N + direction·outLength, then taken back out of metric units.
 std::vector<OutlinePiece> alignedPieces(
-    std::vector<OutlinePiece> pieces, bool wrapsRound, int nodeIndex, NodeKind kind, HandleLead lead, Vector2 metric) {
+    std::vector<OutlinePiece> pieces, bool wrapsRound, int nodeIndex, PathNodeKind kind, HandleLead lead, Vector2 metric) {
     HandleOwners owners = handleOwners(static_cast<int>(pieces.size()), wrapsRound, nodeIndex);
-    if (kind == NodeKind::corner || owners.arriving < 0 || owners.leaving < 0) return pieces;
+    if (kind == PathNodeKind::corner || owners.arriving < 0 || owners.leaving < 0) return pieces;
     OutlinePiece& arriving = pieces[static_cast<size_t>(owners.arriving)];
     OutlinePiece& leaving = pieces[static_cast<size_t>(owners.leaving)];
     Vector2 node = inMetricUnits(leaving.cubic.start, metric);
@@ -104,7 +104,7 @@ std::vector<OutlinePiece> alignedPieces(
     Vector2 direction = lead == HandleLead::incoming ? incomingDirection
         : lead == HandleLead::outgoing               ? outgoingDirection
                                                      : both.normalized();
-    if (kind == NodeKind::symmetric) {
+    if (kind == PathNodeKind::symmetric) {
         float shared = lead == HandleLead::incoming ? incomingLength
             : lead == HandleLead::outgoing          ? outgoingLength
                                                     : (incomingLength + outgoingLength) / 2;
@@ -138,31 +138,31 @@ std::vector<OutlinePiece> alignedPieces(
 /// Use when: deciding whether dragging one handle should turn the other; labelling nodes in an editor
 /// Tags: node type, smooth or corner, symmetric node, cusp, tangent continuity, handle check
 /// Node: planned (setNodeKind)
-NodeKind Path2D::effectiveNodeKind(int nodeIndex, Vector2 metric) const {
+PathNodeKind Path2D::effectiveNodeKind(int nodeIndex, Vector2 metric) const {
     if (nodeIndex < 0 || nodeIndex > static_cast<int>(segmentList.size())) {
         throw MathProblem("A node kind can only be read on a node of the path: 0 is the start, then each segment's end.");
     }
-    if (std::optional<NodeKind> marked = this->nodeKind(nodeIndex)) return *marked;
+    if (std::optional<PathNodeKind> marked = this->nodeKind(nodeIndex)) return *marked;
     NodeFrame frame = frameOf(*this);
     HandleOwners owners = handleOwners(static_cast<int>(frame.pieces.size()), frame.wrapsRound, nodeIndex);
-    if (owners.arriving < 0 || owners.leaving < 0) return NodeKind::corner;
+    if (owners.arriving < 0 || owners.leaving < 0) return PathNodeKind::corner;
     const CubicBezier<Vector2>& arriving = frame.pieces[static_cast<size_t>(owners.arriving)].cubic;
     const CubicBezier<Vector2>& leaving = frame.pieces[static_cast<size_t>(owners.leaving)].cubic;
     Vector2 node = inMetricUnits(leaving.start, metric);
     auto scaled = [&](Vector2 point) { return inMetricUnits(point, metric); };
     std::optional<Vector2> incoming = directionFrom(node, {scaled(arriving.endHandle), scaled(arriving.startHandle), scaled(arriving.start)});
     std::optional<Vector2> outgoing = directionFrom(node, {scaled(leaving.startHandle), scaled(leaving.endHandle), scaled(leaving.end)});
-    if (!incoming || !outgoing) return NodeKind::corner;
+    if (!incoming || !outgoing) return PathNodeKind::corner;
     Vector2 incomingUnit = incoming->normalized();
     Vector2 outgoingUnit = outgoing->normalized();
     // `incoming` points from the node back along the arriving piece, so a smooth node has it
     // opposite to `outgoing`: the cross product vanishes and the dot product is negative.
-    if (std::fabs(incomingUnit.cross(outgoingUnit)) > collinearTolerance || incomingUnit.dot(outgoingUnit) > 0) return NodeKind::corner;
+    if (std::fabs(incomingUnit.cross(outgoingUnit)) > collinearTolerance || incomingUnit.dot(outgoingUnit) > 0) return PathNodeKind::corner;
     float incomingLength = (node - scaled(arriving.endHandle)).length();
     float outgoingLength = (scaled(leaving.startHandle) - node).length();
     bool isEven = incomingLength > shortestHandle
         && std::fabs(incomingLength - outgoingLength) <= 1e-6f * std::max(incomingLength, outgoingLength);
-    return isEven ? NodeKind::symmetric : NodeKind::smooth;
+    return isEven ? PathNodeKind::symmetric : PathNodeKind::smooth;
 }
 
 /// The kind of every node, in order.
@@ -170,8 +170,8 @@ NodeKind Path2D::effectiveNodeKind(int nodeIndex, Vector2 metric) const {
 /// Use when: showing all node types of a path at once
 /// Tags: node kinds, node types list
 /// Node: planned (setNodeKind)
-std::vector<NodeKind> Path2D::effectiveNodeKinds(Vector2 metric) const {
-    std::vector<NodeKind> kinds;
+std::vector<PathNodeKind> Path2D::effectiveNodeKinds(Vector2 metric) const {
+    std::vector<PathNodeKind> kinds;
     for (int node = 0; node <= static_cast<int>(segmentList.size()); node += 1) kinds.push_back(effectiveNodeKind(node, metric));
     return kinds;
 }
@@ -188,9 +188,9 @@ std::vector<NodeKind> Path2D::effectiveNodeKinds(Vector2 metric) const {
 /// Use when: turning a corner node smooth in a pen tool; making an outline's nodes symmetric
 /// Tags: make smooth, make symmetric, align handles, node type, convert node
 /// Node: planned (setNodeKind)
-Path2D Path2D::withNodeKind(NodeKind kind, const std::vector<int>& nodeIndices, Vector2 metric) const {
+Path2D Path2D::withNodeKind(PathNodeKind kind, const std::vector<int>& nodeIndices, Vector2 metric) const {
     NodeFrame frame = frameOf(*this);
-    std::vector<std::optional<NodeKind>> kinds = markedKinds(*this);
+    std::vector<std::optional<PathNodeKind>> kinds = markedKinds(*this);
     for (int nodeIndex : nodeIndices) {
         if (nodeIndex < 0 || nodeIndex >= static_cast<int>(kinds.size())) {
             throw MathProblem("A node kind can only be marked on a node of the path: 0 is the start, then each segment's end.");
@@ -206,7 +206,7 @@ Path2D Path2D::withNodeKind(NodeKind kind, const std::vector<int>& nodeIndices, 
 /// Use when: smoothing a whole hand-drawn outline in one step
 /// Tags: all nodes smooth, set all node kinds
 /// Node: planned (setNodeKind)
-Path2D Path2D::withNodeKind(NodeKind kind, Vector2 metric) const {
+Path2D Path2D::withNodeKind(PathNodeKind kind, Vector2 metric) const {
     std::vector<int> every;
     for (int node = 0; node <= static_cast<int>(segmentList.size()); node += 1) every.push_back(node);
     return withNodeKind(kind, every, metric);
@@ -224,7 +224,7 @@ Path2D Path2D::withNodeKind(NodeKind kind, Vector2 metric) const {
 /// Tags: move handle, drag handle, control point drag, smooth handle follow
 /// Node: planned (moveHandle)
 Path2D Path2D::withHandleMoved(int nodeIndex, HandleSide side, Vector2 to, Vector2 metric) const {
-    NodeKind kind = effectiveNodeKind(nodeIndex, metric);
+    PathNodeKind kind = effectiveNodeKind(nodeIndex, metric);
     NodeFrame frame = frameOf(*this);
     HandleOwners owners = handleOwners(static_cast<int>(frame.pieces.size()), frame.wrapsRound, nodeIndex);
     int ownerIndex = side == HandleSide::incoming ? owners.arriving : owners.leaving;
@@ -235,7 +235,7 @@ Path2D Path2D::withHandleMoved(int nodeIndex, HandleSide side, Vector2 to, Vecto
     frame.pieces[static_cast<size_t>(ownerIndex)] = OutlinePiece::curve(moved);
     frame.pieces = alignedPieces(
         frame.pieces, frame.wrapsRound, nodeIndex, kind, side == HandleSide::incoming ? HandleLead::incoming : HandleLead::outgoing, metric);
-    std::vector<std::optional<NodeKind>> kinds = markedKinds(*this);
+    std::vector<std::optional<PathNodeKind>> kinds = markedKinds(*this);
     kinds[static_cast<size_t>(nodeIndex)] = kind;
     return rebuilt(frame.pieces, *this, kinds);
 }

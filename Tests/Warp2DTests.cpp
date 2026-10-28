@@ -114,8 +114,8 @@ TEST(aWarpedPathAgreesWithMappingItWhenTheWarpIsAffine) {
     EXPECT(isApproximatelyEqual(warped.signedArea(), path.signedArea() * 1.05f, 1.0f));
     // Node marks survive when no piece was cut.
     Path2D marked = path;
-    marked.setNodeKind(1, NodeKind::smooth);
-    EXPECT(Warp2D::warpedPath(marked, Warp2D::affine(transform)).nodeKind(1) == NodeKind::smooth);
+    marked.setNodeKind(1, PathNodeKind::smooth);
+    EXPECT(Warp2D::warpedPath(marked, Warp2D::affine(transform)).nodeKind(1) == PathNodeKind::smooth);
     // A lone start point is only mapped.
     EXPECT(isClose(Warp2D::warpedPath(Path2D(Vector2(10, 20)), Warp2D::affine(transform)).start, Vector2(10, 13)));
 }

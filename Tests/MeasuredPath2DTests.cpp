@@ -109,12 +109,12 @@ TEST(joinedAddsALinkOnlyWhenThePathsDoNotMeet) {
     EXPECT_PROBLEM(Path2D(first).joined(square()), "open paths");
     // Marks follow their nodes, and the meeting node is cleared.
     Path2D marked = meeting;
-    marked.setNodeKind(1, NodeKind::smooth);
+    marked.setNodeKind(1, PathNodeKind::smooth);
     Path2D markedFirst = first;
-    markedFirst.setNodeKind(1, NodeKind::symmetric);
+    markedFirst.setNodeKind(1, PathNodeKind::symmetric);
     Path2D both = markedFirst.joined(marked);
     EXPECT(!both.nodeKind(1).has_value());
-    EXPECT(both.nodeKind(2) == NodeKind::smooth);
+    EXPECT(both.nodeKind(2) == PathNodeKind::smooth);
 }
 
 // MARK: Node kinds
@@ -124,22 +124,22 @@ TEST(nodeKindsAreReadFromTheHandles) {
     Path2D path(Vector2(0, 0));
     path.addCubic(Vector2(0, 5), Vector2(5, 10), Vector2(10, 10));
     path.addCubic(Vector2(15, 10), Vector2(20, 5), Vector2(20, 0));
-    EXPECT(path.effectiveNodeKind(0) == NodeKind::corner);
-    EXPECT(path.effectiveNodeKind(2) == NodeKind::corner);
-    EXPECT(path.effectiveNodeKind(1) == NodeKind::symmetric);
+    EXPECT(path.effectiveNodeKind(0) == PathNodeKind::corner);
+    EXPECT(path.effectiveNodeKind(2) == PathNodeKind::corner);
+    EXPECT(path.effectiveNodeKind(1) == PathNodeKind::symmetric);
     // Lengthening the leaving handle to 10 keeps it smooth but not symmetric.
     Path2D longer(Vector2(0, 0));
     longer.addCubic(Vector2(0, 5), Vector2(5, 10), Vector2(10, 10));
     longer.addCubic(Vector2(20, 10), Vector2(20, 5), Vector2(20, 0));
-    EXPECT(longer.effectiveNodeKind(1) == NodeKind::smooth);
+    EXPECT(longer.effectiveNodeKind(1) == PathNodeKind::smooth);
     // A leaving handle that turns away is a corner.
     Path2D bent(Vector2(0, 0));
     bent.addCubic(Vector2(0, 5), Vector2(5, 10), Vector2(10, 10));
     bent.addCubic(Vector2(10, 15), Vector2(20, 5), Vector2(20, 0));
-    EXPECT(bent.effectiveNodeKind(1) == NodeKind::corner);
+    EXPECT(bent.effectiveNodeKind(1) == PathNodeKind::corner);
     // A mark wins over the handles.
-    bent.setNodeKind(1, NodeKind::smooth);
-    EXPECT(bent.effectiveNodeKind(1) == NodeKind::smooth);
+    bent.setNodeKind(1, PathNodeKind::smooth);
+    EXPECT(bent.effectiveNodeKind(1) == PathNodeKind::smooth);
     EXPECT_PROBLEM(bent.effectiveNodeKind(7), "node");
 }
 
@@ -148,7 +148,7 @@ TEST(aLineBesideACubicCountsAsACubicWithHandlesAThirdAlong) {
     Path2D path(Vector2(0, 0));
     path.addLine(Vector2(10, 0));
     path.addCubic(Vector2(20, 0), Vector2(30, 10), Vector2(30, 20));
-    EXPECT(path.effectiveNodeKind(1) == NodeKind::smooth);
+    EXPECT(path.effectiveNodeKind(1) == PathNodeKind::smooth);
 }
 
 TEST(movingASymmetricHandleTurnsItsPartnerTheSameLength) {
@@ -160,10 +160,10 @@ TEST(movingASymmetricHandleTurnsItsPartnerTheSameLength) {
     Path2D moved = path.withHandleMoved(1, HandleSide::outgoing, Vector2(13, 14));
     EXPECT(isClose(moved.segments()[1].startHandle, Vector2(13, 14)));
     EXPECT(isClose(moved.segments()[0].endHandle, Vector2(7, 6)));
-    EXPECT(moved.nodeKind(1) == NodeKind::symmetric);
+    EXPECT(moved.nodeKind(1) == PathNodeKind::symmetric);
     // Property: the node and the other handles stay put, and the node is still symmetric.
     EXPECT(moved.segments()[0].end() == Vector2(10, 10) && isClose(moved.segments()[1].endHandle, Vector2(20, 5)));
-    EXPECT(moved.effectiveNodeKind(1) == NodeKind::symmetric);
+    EXPECT(moved.effectiveNodeKind(1) == PathNodeKind::symmetric);
     // The ends have only one handle.
     EXPECT_PROBLEM(path.withHandleMoved(0, HandleSide::incoming, Vector2(1, 1)), "no handle");
 }
@@ -185,15 +185,15 @@ TEST(withNodeKindLinesUpHandlesToSmoothAndSymmetric) {
     Path2D path(Vector2(0, 0));
     path.addCubic(Vector2(0, 5), Vector2(5, 10), Vector2(10, 10));
     path.addCubic(Vector2(10, 15), Vector2(20, 5), Vector2(20, 0));
-    Path2D smooth = path.withNodeKind(NodeKind::smooth, std::vector<int>{1});
+    Path2D smooth = path.withNodeKind(PathNodeKind::smooth, std::vector<int>{1});
     EXPECT(isClose(smooth.segments()[0].endHandle, Vector2(6.46447f, 6.46447f), 1e-3f));
     EXPECT(isClose(smooth.segments()[1].startHandle, Vector2(13.53553f, 13.53553f), 1e-3f));
-    EXPECT(smooth.nodeKind(1) == NodeKind::smooth);
+    EXPECT(smooth.nodeKind(1) == PathNodeKind::smooth);
     EXPECT(smooth.nodeKind(0) == std::nullopt);
-    EXPECT_PROBLEM(path.withNodeKind(NodeKind::smooth, std::vector<int>{9}), "node");
+    EXPECT_PROBLEM(path.withNodeKind(PathNodeKind::smooth, std::vector<int>{9}), "node");
     // Marking every node leaves the ends' handles alone.
-    Path2D all = path.withNodeKind(NodeKind::symmetric);
-    EXPECT(all.nodeKind(0) == NodeKind::symmetric && all.nodeKind(2) == NodeKind::symmetric);
+    Path2D all = path.withNodeKind(PathNodeKind::symmetric);
+    EXPECT(all.nodeKind(0) == PathNodeKind::symmetric && all.nodeKind(2) == PathNodeKind::symmetric);
     EXPECT(isClose(all.segments()[0].startHandle, Vector2(0, 5)));
 }
 
@@ -225,9 +225,9 @@ TEST(reversedKeepsNodeMarksOnTheirNodes) {
     path.addLine(Vector2(10, 0));
     path.addLine(Vector2(10, 10));
     path.addLine(Vector2(0, 10));
-    path.setNodeKind(1, NodeKind::smooth);
+    path.setNodeKind(1, PathNodeKind::smooth);
     Path2D backwards = path.reversed();
-    EXPECT(backwards.nodeKind(2) == NodeKind::smooth);
+    EXPECT(backwards.nodeKind(2) == PathNodeKind::smooth);
     EXPECT(!backwards.nodeKind(1).has_value());
 }
 
@@ -245,11 +245,11 @@ TEST(startingAtNodeKeepsTheOutlineAndMovesTheStart) {
 
 TEST(mappedMovesEveryPointAndKeepsClosureAndMarks) {
     Path2D path = square();
-    path.setNodeKind(2, NodeKind::corner);
+    path.setNodeKind(2, PathNodeKind::corner);
     AffineTransform2 move = AffineTransform2::translationBy(Vector2(1, 2));
     Path2D moved = path.mapped([&](Vector2 point) { return move.applied(point); });
     EXPECT(moved.start == Vector2(1, 2) && moved.currentPoint() == Vector2(1, 102));
-    EXPECT(moved.isClosed() && moved.nodeKind(2) == NodeKind::corner);
+    EXPECT(moved.isClosed() && moved.nodeKind(2) == PathNodeKind::corner);
     EXPECT(isApproximatelyEqual(moved.signedArea(), path.signedArea()));
 }
 
@@ -430,9 +430,9 @@ TEST(cutAddsNodesWithoutChangingTheShape) {
     EXPECT(measured.cut({}) == lShape());
     // Marks stay with their nodes; the new node is unmarked.
     Path2D marked = lShape();
-    marked.setNodeKind(2, NodeKind::corner);
+    marked.setNodeKind(2, PathNodeKind::corner);
     Path2D markedCut = MeasuredPath2D(marked).cut({0.5f});
-    EXPECT(markedCut.nodeKind(3) == NodeKind::corner && !markedCut.nodeKind(2).has_value());
+    EXPECT(markedCut.nodeKind(3) == PathNodeKind::corner && !markedCut.nodeKind(2).has_value());
 }
 
 TEST(dividedMakesEqualLengthPieces) {

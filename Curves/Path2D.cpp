@@ -20,12 +20,12 @@ const char* const noSuchNodeMessage = "A node kind can only be marked on a node 
 
 // MARK: - Node kinds
 
-std::optional<NodeKind> Path2D::nodeKind(int nodeIndex) const {
+std::optional<PathNodeKind> Path2D::nodeKind(int nodeIndex) const {
     if (nodeIndex < 0 || nodeIndex >= static_cast<int>(nodeKindList.size())) return std::nullopt;
     return nodeKindList[static_cast<size_t>(nodeIndex)];
 }
 
-void Path2D::setNodeKind(int nodeIndex, std::optional<NodeKind> kind) {
+void Path2D::setNodeKind(int nodeIndex, std::optional<PathNodeKind> kind) {
     if (nodeIndex < 0 || nodeIndex > static_cast<int>(segmentList.size())) throw MathProblem(noSuchNodeMessage);
     if (nodeIndex >= static_cast<int>(nodeKindList.size())) {
         if (!kind) return;

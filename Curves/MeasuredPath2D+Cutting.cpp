@@ -72,7 +72,7 @@ Path2D MeasuredPath2D::cut(const std::vector<float>& progresses) const {
     if (!hasCuts) return pathValue;
 
     std::vector<OutlinePiece> cutPieces;
-    std::vector<std::optional<NodeKind>> kinds{pathValue.nodeKind(0)};
+    std::vector<std::optional<PathNodeKind>> kinds{pathValue.nodeKind(0)};
     for (size_t index = 0; index < pieceList.size(); index += 1) {
         std::vector<float> boundaries{0};
         std::sort(cutsByPiece[index].begin(), cutsByPiece[index].end());
