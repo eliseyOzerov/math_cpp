@@ -26,6 +26,15 @@ namespace editor {
 
 struct PathCorner;
 
+/// How a path's node joins the pieces either side of it, as a pen tool keeps it while editing:
+/// free handles, handles on one line, or handles on one line and of equal length.
+///
+/// Use when: keeping a smooth node smooth while a neighbour moves; reading a path from a
+///   design tool that marks its nodes
+/// Tags: node type, corner node, smooth node, symmetric node, cusp, tangent continuity, G1, C1
+/// Node: planned (setNodeKind)
+enum class NodeKind { corner, smooth, symmetric };
+
 /// A 2D path: a start point followed by straight lines and cubic Bézier curves, each beginning
 /// where the one before ended. Circle arcs are stored as cubics (`addArc`).
 ///
@@ -102,6 +111,23 @@ public:
     /// Tags: current point, pen position, last point, path end
     /// Node: inside roundCorners, chamferCorners
     Vector2 currentPoint() const { return segmentList.empty() ? start : segmentList.back().end(); }
+
+    /// The kind marked on node `nodeIndex` (0 is `start`, then the end of each segment), or
+    /// nothing when none was marked. Marks are not geometry: they say how an edit should keep
+    /// the handles, and are kept when the path is built further.
+    ///
+    /// Use when: deciding whether moving one handle should move its partner
+    /// Tags: node kind, node type, smooth or corner
+    /// Node: planned (setNodeKind)
+    std::optional<NodeKind> nodeKind(int nodeIndex) const;
+
+    /// Marks node `nodeIndex` (0 is `start`, then the end of each segment) as `kind`, or clears
+    /// the mark with nothing. Throws a `MathProblem` when there is no such node.
+    ///
+    /// Use when: recording that a node was drawn smooth; reading node types from an SVG editor
+    /// Tags: set node kind, mark smooth, mark corner
+    /// Node: planned (setNodeKind)
+    void setNodeKind(int nodeIndex, std::optional<NodeKind> kind);
 
     // MARK: Building (Path2D.cpp)
 
@@ -214,6 +240,8 @@ public:
 private:
     std::vector<Segment> segmentList;
     bool closed = false;
+    /// One entry per node that was marked, longer only as far as the highest mark.
+    std::vector<std::optional<NodeKind>> nodeKindList;
 
     static bool isSamePointUpToRounding(Vector2 first, Vector2 second);
 };

@@ -56,6 +56,21 @@ struct CurveCrossing {
     bool operator==(const CurveCrossing&) const = default;
 };
 
+/// Where a curve crosses a circle: the parameter on the curve and the point.
+///
+/// Use when: trimming a curve where it enters a round end cap; finding where a stroke leaves a
+///   brush circle
+/// Tags: circle intersection, curve circle crossing, ray circle, trim at radius
+/// Node: planned (circleCrossings)
+struct CircleCrossing {
+    /// The parameter on the curve, 0…1.
+    float parameter = 0;
+    /// Where the curve meets the circle.
+    Vector2 point;
+
+    bool operator==(const CircleCrossing&) const = default;
+};
+
 /// The two parameters at which a cubic passes through the same point, the knot of its loop
 /// (Swift's tuple `(first: Float, second: Float)`).
 ///

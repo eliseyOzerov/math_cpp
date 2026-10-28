@@ -13,7 +13,26 @@ namespace {
 /// The message when a piece is added after `close()`.
 const char* const addingToClosedPathMessage = "A closed path cannot grow: add every piece before calling close().";
 
+/// The message when a node mark names a node the path does not have.
+const char* const noSuchNodeMessage = "A node kind can only be marked on a node of the path: 0 is the start, then each segment's end.";
+
 } // namespace
+
+// MARK: - Node kinds
+
+std::optional<NodeKind> Path2D::nodeKind(int nodeIndex) const {
+    if (nodeIndex < 0 || nodeIndex >= static_cast<int>(nodeKindList.size())) return std::nullopt;
+    return nodeKindList[static_cast<size_t>(nodeIndex)];
+}
+
+void Path2D::setNodeKind(int nodeIndex, std::optional<NodeKind> kind) {
+    if (nodeIndex < 0 || nodeIndex > static_cast<int>(segmentList.size())) throw MathProblem(noSuchNodeMessage);
+    if (nodeIndex >= static_cast<int>(nodeKindList.size())) {
+        if (!kind) return;
+        nodeKindList.resize(static_cast<size_t>(nodeIndex) + 1);
+    }
+    nodeKindList[static_cast<size_t>(nodeIndex)] = kind;
+}
 
 // MARK: - Building
 
