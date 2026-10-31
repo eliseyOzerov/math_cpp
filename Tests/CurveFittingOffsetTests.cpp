@@ -5,6 +5,7 @@
 // distance there is a right-positive one here, so its sign is flipped).
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include "../Curves/CubicBezier.h"
@@ -14,6 +15,7 @@
 #include "../Geometry/Circle2.h"
 #include "../Geometry/ConvexHull2D.h"
 #include "../Geometry/HalfPlane2.h"
+#include "../Geometry/Segment2.h"
 #include "Testing.h"
 
 using namespace editor;
@@ -382,4 +384,37 @@ TEST(strokeOutlinePiecesAreClosedAndAddUpToTheOutline) {
     Curve2 straight(Vector2(0, 0), Vector2(10, 0), Vector2(20, 0), Vector2(30, 0));
     std::vector<Path2D> strips = Path2D::strokeOutlinePieces(straight, 2);
     EXPECT(strips.size() == 1 && isApproximatelyEqual(strips[0].signedArea(), -120.0f, 1.0f));
+}
+
+TEST(strokeOutlinePiecesOfALoopKeepBothSidesAtTheDistance) {
+    // A tall narrow loop a brush stroke drew as one piece: its ends head about 31° apart, but it
+    // turns about 330° in between, so comparing its ends alone called it simple and one side of
+    // its outline collapsed onto the curve.
+    Curve2 loop(Vector2(124.55f, -36.08f), Vector2(173.82f, -94.77f), Vector2(97.61f, 101.87f), Vector2(114.16f, -5.01f));
+    EXPECT(!loop.isSimpleForOffset());
+    std::vector<Path2D> pieces = Path2D::strokeOutlinePieces(loop, 2);
+    EXPECT(pieces.size() >= 6);
+    // Every point of both sides lies 2 from the curve, give or take the handle-scaling fit, which
+    // strays most (about 0.23) where the top bends tighter (radius 1.4) than the distance; a
+    // collapsed side was 1 to 2 off.
+    const std::vector<Vector2> curvePoints = loop.flattened(0.001f);
+    auto distanceToCurve = [&](Vector2 point) {
+        float nearest = std::numeric_limits<float>::max();
+        for (size_t index = 0; index + 1 < curvePoints.size(); index += 1) {
+            nearest = std::min(nearest, Segment2(curvePoints[index], curvePoints[index + 1]).distance(point));
+        }
+        return nearest;
+    };
+    float worst = 0;
+    for (const Path2D& piece : pieces) {
+        for (size_t side : {size_t(0), size_t(2)}) {
+            const std::optional<Curve2> edge = piece.edges()[side].cubic();
+            EXPECT(edge.has_value());
+            if (!edge) continue;
+            for (int step = 0; step <= 16; step += 1) {
+                worst = std::max(worst, std::fabs(distanceToCurve(edge->point(static_cast<float>(step) / 16)) - 2));
+            }
+        }
+    }
+    EXPECT(worst < 0.3f);
 }

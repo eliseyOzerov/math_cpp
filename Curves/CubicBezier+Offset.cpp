@@ -44,6 +44,23 @@ float largestCoordinateOf(std::initializer_list<Vector2> points) {
     return largest;
 }
 
+/// The largest turn between any two of `directions`, leaving out the zero ones: how far apart the
+/// directions of a cone they span are, from 0 to 180°.
+///
+/// Use when: bounding how far a curve's direction can swing from the vectors its tangent is built of
+/// Tags: angular spread, cone of directions, largest angle between vectors
+/// Node: none (solver)
+Angle largestTurnBetween(std::initializer_list<Vector2> directions) {
+    float largest = 0;
+    for (const Vector2* first = directions.begin(); first != directions.end(); ++first) {
+        for (const Vector2* second = first + 1; second != directions.end(); ++second) {
+            if (*first == Vector2() || *second == Vector2()) continue;
+            largest = largerOf(largest, std::fabs(Angle::signedTurn(*first, *second).radians));
+        }
+    }
+    return Angle::fromRadians(largest);
+}
+
 } // namespace
 
 /// The largest turn between the start and end directions of a piece that counts as simple
@@ -65,11 +82,18 @@ Angle CubicBezier<PointType>::largestSimpleTurn()
 /// 1. Both handles lie on the same side of the chord from start to end (or on it): the
 ///    cross products `(P3 − P0) × (P1 − P0)` and `(P3 − P0) × (P2 − P0)` do not have opposite
 ///    signs. This rules out S-shapes, whose offset bulges both ways.
-/// 2. The direction turns by less than `largestSimpleTurn` (60°) from start to end.
+/// 2. The direction turns by less than `largestSimpleTurn` (60°) anywhere along it. The tangent
+///    is a quadratic Bézier, B′(t) = 3[(1−t)²·D0 + 2(1−t)t·D1 + t²·D2], in the handle vectors
+///    D0 = P1 − P0, D1 = P2 − P1 and D2 = P3 − P2, so every tangent lies in the cone those three
+///    span (the convex hull property): when no two of them are 60° apart, no two tangents are.
+///    Comparing only the start and end directions misses a loop, whose direction comes back
+///    round near where it began after turning most of the way round (a tall narrow loop drawn
+///    in one piece turns about 330° and its ends differ by 30°); offset in one fit, one of its
+///    sides collapses onto the curve. A handle on its end point is a zero vector and is left out.
 ///
-///     simple:   ╭──╮          not simple:  ╭╮     ╭─╮
-///              ╱    ╲                     ╱ ╰╮   ╱  ╰─╮
-///                                              ╲╱       (an S, or a hairpin)
+///     simple:   ╭──╮          not simple:  ╭╮     ╭─╮      ╭╮
+///              ╱    ╲                     ╱ ╰╮   ╱  ╰─╮   ( |
+///                                              ╲╱          ╲╰─  (an S, a hairpin, a loop)
 ///
 /// The cross products are taken of the control points measured from the start and divided
 /// by their largest coordinate, and their signs are compared rather than their product: at
@@ -78,7 +102,8 @@ Angle CubicBezier<PointType>::largestSimpleTurn()
 /// A curve that is a single point, or has a non-finite control point, is not simple.
 ///
 /// Source: Fountain `curves/offset.ts` (the user's own library), after Pomax, *A Primer on
-/// Bézier Curves*, "Curve offsetting".
+/// Bézier Curves*, "Curve offsetting"; the hodograph and its convex hull, Farin, *Curves and
+/// Surfaces for CAGD*, "Derivatives of a Bézier curve".
 ///
 /// Use when: deciding whether a piece needs cutting before it is offset
 /// Tags: simple curve, offsettable, gentle curve, Bezier reduce, control polygon side test
@@ -101,7 +126,9 @@ bool CubicBezier<PointType>::isSimpleForOffset() const
     Vector2 startTangent = startDirection();
     Vector2 endTangent = endDirection();
     if (startTangent == Vector2() || endTangent == Vector2()) return false;
-    return std::fabs(Angle::signedTurn(startTangent, endTangent).radians) < largestSimpleTurn().radians;
+    if (!(std::fabs(Angle::signedTurn(startTangent, endTangent).radians) < largestSimpleTurn().radians)) return false;
+    Angle tangentSpread = largestTurnBetween({startHandle - start, endHandle - startHandle, end - endHandle});
+    return tangentSpread.radians < largestSimpleTurn().radians;
 }
 
 /// The curve cut into pieces that are each `isSimpleForOffset`, in order, the first starting
